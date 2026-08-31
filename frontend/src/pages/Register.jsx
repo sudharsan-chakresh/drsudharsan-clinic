@@ -41,7 +41,7 @@ export default function Register({ onSwitchToLogin }) {
         maxWidth: "400px",
       }}>
         <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <img src={logo} alt="Logo" style={{ width: "60px", height: "60px", marginBottom: "16px", borderRadius: "12px" }} />
+          <img src={logo} alt="Logo" style={{ width: "100px", height: "100px", marginBottom: "16px", borderRadius: "16px" }} />
           <h1 className="display-font" style={{ fontSize: "28px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
             Patient Registration
           </h1>
