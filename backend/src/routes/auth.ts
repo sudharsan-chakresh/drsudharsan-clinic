@@ -1,15 +1,8 @@
 import express from "express";
-import { randomBytes } from "crypto";
 import { query } from "../db";
-import { hashPassword, verifyPassword } from "../auth";
+import { hashPassword, verifyPassword, generateToken, verifyToken } from "../auth";
 
 export const authRouter = express.Router();
-
-function generateToken(): string {
-  return randomBytes(32).toString("hex");
-}
-
-const tokens = new Map<string, number>();
 
 authRouter.post("/login", async (req, res) => {
   try {
@@ -25,9 +18,7 @@ authRouter.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = generateToken();
-    tokens.set(token, user.id);
-
+    const token = generateToken(user.id);
     const { password: _, ...userWithoutPassword } = user;
     res.json({ user: userWithoutPassword, token });
   } catch (error) {
@@ -79,8 +70,6 @@ authRouter.get("/users/:id", async (req, res) => {
 });
 
 authRouter.post("/logout", (req, res) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (token) tokens.delete(token);
   res.json({ success: true, message: "Logged out" });
 });
 
@@ -108,9 +97,13 @@ authRouter.post("/register", async (req, res) => {
 
 export function authenticate(req: any, res: any, next: any) {
   const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token || !tokens.has(token)) {
+  if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  req.userId = tokens.get(token);
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  req.userId = decoded.userId;
   next();
 }
