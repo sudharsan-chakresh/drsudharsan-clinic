@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Calendar, UserPlus, ListOrdered, Package, Receipt,
   Users, Stethoscope, Pill, ClipboardList, Sparkles, ChevronDown, Footprints, Video, LogOut,
 } from "lucide-react";
-import logo from "../public/logo.png";
+import logo from "../../public/logo.png";
 
 const ALL_NAV_GROUPS = [
   {

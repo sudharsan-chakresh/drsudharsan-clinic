@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { api } from "../api.js";
-import logo from "../public/logo.png";
+import logo from "../../public/logo.png";
 
 export default function Login({ onLoginSuccess, onSwitchToRegister }) {
   const [email, setEmail] = useState("admin@clinic.com");

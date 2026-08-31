@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { api } from "../api.js";
-import logo from "../public/logo.png";
+import logo from "../../public/logo.png";
 
 export default function Register({ onSwitchToLogin }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", guardian: "", phone: "" });
