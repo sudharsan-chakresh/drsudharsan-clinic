@@ -28,7 +28,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check for saved user on mount
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -36,12 +35,19 @@ export default function App() {
         setUser(JSON.parse(savedUser));
       } catch {
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
       }
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      // Ignore logout errors
+    }
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser(null);
     setSection("dashboard");
   };
@@ -78,11 +84,16 @@ export default function App() {
     }
   }, [user, refresh]);
 
+  const handleLoginSuccess = (userData) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
+
   if (!user) {
     return authView === "register" ? (
       <Register onSwitchToLogin={() => setAuthView("login")} />
     ) : (
-      <Login onLoginSuccess={setUser} onSwitchToRegister={() => setAuthView("register")} />
+      <Login onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthView("register")} />
     );
   }
 
@@ -95,7 +106,7 @@ export default function App() {
       <div style={{ padding: 40, fontFamily: "'Plus Jakarta Sans', sans-serif", color: "var(--danger)" }}>
         Couldn't connect to the backend at <code>/api</code>. {error}
         <br />
-        Make sure the backend is running (<code>npm run dev</code> in <code>backend/</code>) on port 4000.
+        Make sure the backend is running (<code>npm run dev</code> in <code>backend/</code>) on port 9876.
       </div>
     );
   }

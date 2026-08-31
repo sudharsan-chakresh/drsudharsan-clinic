@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import { hashPassword } from "./auth";
 
 const dbPath = process.env.VERCEL ? "/tmp/clinic.db" : path.join(__dirname, "..", "clinic.db");
 export const db = new Database(dbPath);
@@ -82,20 +83,30 @@ db.exec(`
     vitals TEXT,
     history TEXT,
     diagnosis TEXT,
+    temperature TEXT,
+    heart_rate TEXT,
+    respiratory_rate TEXT,
+    weight TEXT,
+    height TEXT,
     created_at TEXT NOT NULL,
     completed_at TEXT
   );
 `);
 
-  const addColumn = (col: string, type: string) => {
-    const exists = db.prepare("SELECT COUNT(*) AS c FROM pragma_table_info('consultations') WHERE name = ?").get(col) as any;
-    if (exists.c === 0) {
-      db.exec(`ALTER TABLE consultations ADD COLUMN ${col} ${type};`);
-    }
-  };
-  addColumn("vitals", "TEXT");
-  addColumn("history", "TEXT");
-  addColumn("diagnosis", "TEXT");
+const addColumn = (col: string, type: string) => {
+  const exists = db.prepare("SELECT COUNT(*) AS c FROM pragma_table_info('consultations') WHERE name = ?").get(col) as any;
+  if (exists.c === 0) {
+    db.exec(`ALTER TABLE consultations ADD COLUMN ${col} ${type};`);
+  }
+};
+addColumn("vitals", "TEXT");
+addColumn("history", "TEXT");
+addColumn("diagnosis", "TEXT");
+addColumn("temperature", "TEXT");
+addColumn("heart_rate", "TEXT");
+addColumn("respiratory_rate", "TEXT");
+addColumn("weight", "TEXT");
+addColumn("height", "TEXT");
 
 function seedIfEmpty() {
   const counts = {
@@ -176,23 +187,22 @@ function seedIfEmpty() {
       "INSERT INTO users (email, password, name, role, phone, created_at) VALUES (?, ?, ?, ?, ?, ?)"
     );
     const now = new Date().toISOString();
-    // Password hashing is simplified here. In production, use bcrypt or similar.
-    insertUser.run("admin@clinic.com", "admin123", "Admin", "Admin", "94440 00000", now);
-    insertUser.run("doctor1@clinic.com", "doctor123", "Dr. Sudharsan", "Doctor", "94440 12233", now);
-    insertUser.run("doctor2@clinic.com", "doctor123", "Dr. Anjali Rao", "Doctor", "94440 55214", now);
-    insertUser.run("pharmacist@clinic.com", "pharm123", "Karthik Suresh", "Pharmacist", "98765 11220", now);
-    insertUser.run("receptionist@clinic.com", "recep123", "Lavanya Muthu", "Receptionist", "90031 44556", now);
-    insertUser.run("patient@clinic.com", "patient123", "Priya Krishnan", "Patient", "98410 22110", now);
+    insertUser.run("admin@clinic.com", hashPassword("admin123"), "Admin", "Admin", "94440 00000", now);
+    insertUser.run("doctor1@clinic.com", hashPassword("doctor123"), "Dr. Sudharsan", "Doctor", "94440 12233", now);
+    insertUser.run("doctor2@clinic.com", hashPassword("doctor123"), "Dr. Anjali Rao", "Doctor", "94440 55214", now);
+    insertUser.run("pharmacist@clinic.com", hashPassword("pharm123"), "Karthik Suresh", "Pharmacist", "98765 11220", now);
+    insertUser.run("receptionist@clinic.com", hashPassword("recep123"), "Lavanya Muthu", "Receptionist", "90031 44556", now);
+    insertUser.run("patient@clinic.com", hashPassword("patient123"), "Priya Krishnan", "Patient", "98410 22110", now);
   }
 
   if (counts.consultations === 0) {
     const insert = db.prepare(
-      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, vitals, history, diagnosis, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, vitals, history, diagnosis, temperature, heart_rate, respiratory_rate, weight, height, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    insert.run(1, 1, 2, "completed", "https://meet.google.com/abc-def-ghi", "Paracetamol 5ml BD", "Follow up in 3 days", "Temp: 99.2°F, HR: 110bpm, RR: 28/min", "No known allergies", "Viral fever", "2026-08-25T09:15:00.000Z", "2026-08-25T09:45:00.000Z");
-    insert.run(2, 2, 3, "scheduled", "https://meet.google.com/xyz-uvw-rst", null, "Growth review consultation", "Temp: 98.6°F, Wt: 14kg, Ht: 95cm", "Asthma history", "Growth milestone review", "2026-08-27T11:00:00.000Z", null);
-    insert.run(3, 3, 2, "in-progress", null, "Amoxicillin 5ml TDS", "Fever check follow-up", "Temp: 100.4°F, HR: 120bpm", "Previous ear infection", "Acute otitis media", "2026-08-28T10:30:00.000Z", null);
-    insert.run(4, 4, 3, "scheduled", null, null, "OPD review", "Temp: 98.8°F, Wt: 18kg", "No significant history", "Routine checkup", "2026-08-29T11:00:00.000Z", null);
+    insert.run(1, 1, 2, "completed", "https://meet.google.com/abc-def-ghi", "Paracetamol 5ml BD", "Follow up in 3 days", "Temp: 99.2°F, HR: 110bpm, RR: 28/min", "No known allergies", "Viral fever", "99.2°F", "110bpm", "28/min", null, null, "2026-08-25T09:15:00.000Z", "2026-08-25T09:45:00.000Z");
+    insert.run(2, 2, 3, "scheduled", "https://meet.google.com/xyz-uvw-rst", null, "Growth review consultation", "Temp: 98.6°F, Wt: 14kg, Ht: 95cm", "Asthma history", "Growth milestone review", "98.6°F", null, null, "14kg", "95cm", "2026-08-27T11:00:00.000Z", null);
+    insert.run(3, 3, 2, "in-progress", null, "Amoxicillin 5ml TDS", "Fever check follow-up", "Temp: 100.4°F, HR: 120bpm", "Previous ear infection", "Acute otitis media", "100.4°F", "120bpm", null, null, null, "2026-08-28T10:30:00.000Z", null);
+    insert.run(4, 4, 3, "scheduled", null, null, "OPD review", "Temp: 98.8°F, Wt: 18kg", "No significant history", "Routine checkup", "98.8°F", null, null, "18kg", null, "2026-08-29T11:00:00.000Z", null);
   }
 }
 

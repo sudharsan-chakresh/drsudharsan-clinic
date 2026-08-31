@@ -14,6 +14,7 @@ export default function Register({ onSwitchToLogin }) {
 
     try {
       await api.register(form);
+      alert("Registration successful! Please login.");
       onSwitchToLogin();
     } catch (err) {
       setError(err.message || "Registration failed");
@@ -63,7 +64,7 @@ export default function Register({ onSwitchToLogin }) {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Full Name</label>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Full Name *</label>
             <input
               type="text"
               value={form.name}
@@ -86,7 +87,7 @@ export default function Register({ onSwitchToLogin }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Email</label>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Email *</label>
             <input
               type="email"
               value={form.email}
@@ -98,7 +99,7 @@ export default function Register({ onSwitchToLogin }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Password</label>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Password *</label>
             <input
               type="password"
               value={form.password}
@@ -106,6 +107,7 @@ export default function Register({ onSwitchToLogin }) {
               className="fld"
               placeholder="••••••••"
               required
+              minLength={6}
             />
           </div>
 

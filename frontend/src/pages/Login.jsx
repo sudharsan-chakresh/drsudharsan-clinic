@@ -15,7 +15,6 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
 
     try {
       const user = await api.login(email, password);
-      localStorage.setItem("user", JSON.stringify(user));
       onLoginSuccess(user);
     } catch (err) {
       setError(err.message || "Login failed");
@@ -72,6 +71,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
               onChange={(e) => setEmail(e.target.value)}
               className="fld"
               placeholder="your@email.com"
+              required
             />
           </div>
 
@@ -83,6 +83,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
               onChange={(e) => setPassword(e.target.value)}
               className="fld"
               placeholder="••••••••"
+              required
             />
           </div>
 

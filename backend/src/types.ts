@@ -82,6 +82,11 @@ export interface Consultation {
   vitals?: string;
   history?: string;
   diagnosis?: string;
+  temperature?: string;
+  heart_rate?: string;
+  respiratory_rate?: string;
+  weight?: string;
+  height?: string;
   created_at: string;
   completed_at?: string;
 }

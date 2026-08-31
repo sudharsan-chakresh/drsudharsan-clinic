@@ -1,10 +1,17 @@
 import express from "express";
+import { randomBytes } from "crypto";
 import { db } from "../db";
 import { User } from "../types";
+import { hashPassword, verifyPassword } from "../auth";
 
 export const authRouter = express.Router();
 
-// Login endpoint
+function generateToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
+const tokens = new Map<string, number>();
+
 authRouter.post("/login", (req, res) => {
   try {
     const { email, password } = req.body;
@@ -13,21 +20,22 @@ authRouter.post("/login", (req, res) => {
       return res.status(400).json({ error: "Email and password required" });
     }
 
-    const user = db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").get(email, password) as User | undefined;
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User | undefined;
 
-    if (!user) {
+    if (!user || !verifyPassword(password, user.password)) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Return user without password
+    const token = generateToken();
+    tokens.set(token, user.id);
+
     const { password: _, ...userWithoutPassword } = user;
-    res.json({ user: userWithoutPassword });
+    res.json({ user: userWithoutPassword, token });
   } catch (error) {
     res.status(500).json({ error: "Login failed" });
   }
 });
 
-// Get all users (Admin only)
 authRouter.get("/users", (req, res) => {
   try {
     const users = db.prepare("SELECT id, email, name, role, phone, created_at FROM users").all() as Omit<User, "password">[];
@@ -37,7 +45,6 @@ authRouter.get("/users", (req, res) => {
   }
 });
 
-// Create new user (Admin only)
 authRouter.post("/users", (req, res) => {
   try {
     const { email, password, name, role, phone } = req.body;
@@ -47,11 +54,12 @@ authRouter.post("/users", (req, res) => {
     }
 
     const created_at = new Date().toISOString();
+    const hashedPassword = hashPassword(password);
     const stmt = db.prepare(
       "INSERT INTO users (email, password, name, role, phone, created_at) VALUES (?, ?, ?, ?, ?, ?)"
     );
 
-    stmt.run(email, password, name, role, phone || null, created_at);
+    stmt.run(email, hashedPassword, name, role, phone || null, created_at);
     res.json({ success: true, message: "User created" });
   } catch (error: any) {
     if (error.message.includes("UNIQUE constraint failed")) {
@@ -61,7 +69,6 @@ authRouter.post("/users", (req, res) => {
   }
 });
 
-// Get user by ID
 authRouter.get("/users/:id", (req, res) => {
   try {
     const user = db.prepare("SELECT id, email, name, role, phone, created_at FROM users WHERE id = ?").get(req.params.id) as Omit<User, "password"> | undefined;
@@ -76,12 +83,12 @@ authRouter.get("/users/:id", (req, res) => {
   }
 });
 
-// Logout endpoint (client-side mainly, but good to have)
 authRouter.post("/logout", (req, res) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  if (token) tokens.delete(token);
   res.json({ success: true, message: "Logged out" });
 });
 
-// Patient self-registration
 authRouter.post("/register", (req, res) => {
   try {
     const { name, email, password, guardian, phone } = req.body;
@@ -91,11 +98,12 @@ authRouter.post("/register", (req, res) => {
     }
 
     const created_at = new Date().toISOString();
+    const hashedPassword = hashPassword(password);
     const stmt = db.prepare(
       "INSERT INTO users (email, password, name, role, phone, created_at) VALUES (?, ?, ?, ?, ?, ?)"
     );
 
-    stmt.run(email, password, name, "Patient", phone || null, created_at);
+    stmt.run(email, hashedPassword, name, "Patient", phone || null, created_at);
     res.json({ success: true, message: "Registration successful" });
   } catch (error: any) {
     if (error.message.includes("UNIQUE constraint failed")) {
@@ -104,3 +112,12 @@ authRouter.post("/register", (req, res) => {
     res.status(500).json({ error: "Registration failed" });
   }
 });
+
+export function authenticate(req: any, res: any, next: any) {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  if (!token || !tokens.has(token)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  req.userId = tokens.get(token);
+  next();
+}

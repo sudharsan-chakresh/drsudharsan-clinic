@@ -4,7 +4,6 @@ import { Consultation } from "../types";
 
 export const consultationsRouter = express.Router();
 
-// Get all consultations
 consultationsRouter.get("/", (req, res) => {
   try {
     const consultations = db.prepare("SELECT * FROM consultations ORDER BY created_at DESC").all() as Consultation[];
@@ -14,7 +13,6 @@ consultationsRouter.get("/", (req, res) => {
   }
 });
 
-// Get consultations for a specific doctor
 consultationsRouter.get("/doctor/:doctor_id", (req, res) => {
   try {
     const consultations = db
@@ -26,7 +24,6 @@ consultationsRouter.get("/doctor/:doctor_id", (req, res) => {
   }
 });
 
-// Get consultations for a specific patient
 consultationsRouter.get("/patient/:patient_id", (req, res) => {
   try {
     const consultations = db
@@ -38,7 +35,6 @@ consultationsRouter.get("/patient/:patient_id", (req, res) => {
   }
 });
 
-// Get consultation by ID
 consultationsRouter.get("/:id", (req, res) => {
   try {
     const consultation = db.prepare("SELECT * FROM consultations WHERE id = ?").get(req.params.id) as Consultation | undefined;
@@ -53,20 +49,23 @@ consultationsRouter.get("/:id", (req, res) => {
   }
 });
 
-// Create consultation
 consultationsRouter.post("/", (req, res) => {
   try {
-    const { appointment_id, patient_id, doctor_id, video_link, prescription, notes, vitals, history, diagnosis } = req.body;
+    const { appointment_id, patient_id, doctor_id, video_link, prescription, notes, vitals, history, diagnosis, temperature, heart_rate, respiratory_rate, weight, height } = req.body;
+
+    if (!patient_id || !doctor_id) {
+      return res.status(400).json({ error: "Patient and Doctor are required" });
+    }
 
     const created_at = new Date().toISOString();
     const stmt = db.prepare(
-      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, vitals, history, diagnosis, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, vitals, history, diagnosis, temperature, heart_rate, respiratory_rate, weight, height, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     const result = stmt.run(
       appointment_id || null,
-      patient_id || null,
-      doctor_id || null,
+      patient_id,
+      doctor_id,
       "scheduled",
       video_link || null,
       prescription || null,
@@ -74,6 +73,11 @@ consultationsRouter.post("/", (req, res) => {
       vitals || null,
       history || null,
       diagnosis || null,
+      temperature || null,
+      heart_rate || null,
+      respiratory_rate || null,
+      weight || null,
+      height || null,
       created_at
     );
 
@@ -83,10 +87,9 @@ consultationsRouter.post("/", (req, res) => {
   }
 });
 
-// Update consultation
 consultationsRouter.put("/:id", (req, res) => {
   try {
-    const { status, video_link, prescription, notes, completed_at, vitals, history, diagnosis } = req.body;
+    const { status, video_link, prescription, notes, completed_at, vitals, history, diagnosis, temperature, heart_rate, respiratory_rate, weight, height } = req.body;
     const id = req.params.id;
 
     const consultation = db.prepare("SELECT * FROM consultations WHERE id = ?").get(id);
@@ -94,8 +97,8 @@ consultationsRouter.put("/:id", (req, res) => {
       return res.status(404).json({ error: "Consultation not found" });
     }
 
-    const updates = [];
-    const values = [];
+    const updates: string[] = [];
+    const values: any[] = [];
 
     if (status !== undefined) {
       updates.push("status = ?");
@@ -125,6 +128,26 @@ consultationsRouter.put("/:id", (req, res) => {
       updates.push("diagnosis = ?");
       values.push(diagnosis);
     }
+    if (temperature !== undefined) {
+      updates.push("temperature = ?");
+      values.push(temperature);
+    }
+    if (heart_rate !== undefined) {
+      updates.push("heart_rate = ?");
+      values.push(heart_rate);
+    }
+    if (respiratory_rate !== undefined) {
+      updates.push("respiratory_rate = ?");
+      values.push(respiratory_rate);
+    }
+    if (weight !== undefined) {
+      updates.push("weight = ?");
+      values.push(weight);
+    }
+    if (height !== undefined) {
+      updates.push("height = ?");
+      values.push(height);
+    }
     if (completed_at !== undefined) {
       updates.push("completed_at = ?");
       values.push(completed_at);
@@ -144,7 +167,6 @@ consultationsRouter.put("/:id", (req, res) => {
   }
 });
 
-// Delete consultation
 consultationsRouter.delete("/:id", (req, res) => {
   try {
     const consultation = db.prepare("SELECT * FROM consultations WHERE id = ?").get(req.params.id);
