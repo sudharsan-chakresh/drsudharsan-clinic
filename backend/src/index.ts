@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import "./db";
+import { initDb, seedIfEmpty } from "./db";
 
 import { appointmentsRouter } from "./routes/appointments";
 import { patientsRouter } from "./routes/patients";
@@ -29,10 +29,24 @@ app.use("/api/invoices", authenticate, billingRouter);
 app.use("/api/staff", authenticate, staffRouter);
 app.use("/api/consultations", authenticate, consultationsRouter);
 
+async function start() {
+  try {
+    await initDb();
+    await seedIfEmpty();
+    console.log("Database initialized and seeded");
+
+    if (!process.env.VERCEL) {
+      app.listen(PORT, () => {
+        console.log(`Clinic backend running at http://localhost:${PORT}`);
+      });
+    }
+  } catch (error) {
+    console.error("Failed to start server:", error);
+  }
+}
+
+start();
+
 if (process.env.VERCEL) {
   module.exports = app;
-} else {
-  app.listen(PORT, () => {
-    console.log(`Clinic backend running at http://localhost:${PORT}`);
-  });
 }

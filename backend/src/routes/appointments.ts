@@ -1,37 +1,50 @@
 import { Router } from "express";
-import { db } from "../db";
-import { Appointment } from "../types";
+import { query } from "../db";
 
 export const appointmentsRouter = Router();
 
-appointmentsRouter.get("/", (_req, res) => {
-  const rows = db.prepare("SELECT * FROM appointments ORDER BY id").all();
-  res.json(rows);
-});
-
-appointmentsRouter.post("/", (req, res) => {
-  const { time, patient, guardian, doctor, type, status } = req.body as Partial<Appointment>;
-  if (!time || !patient) {
-    return res.status(400).json({ error: "time and patient are required" });
+appointmentsRouter.get("/", async (_req, res) => {
+  try {
+    const result = await query("SELECT * FROM appointments ORDER BY id");
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch appointments" });
   }
-  const info = db
-    .prepare(
-      "INSERT INTO appointments (time, patient, guardian, doctor, type, status) VALUES (?, ?, ?, ?, ?, ?)"
-    )
-    .run(time, patient, guardian ?? "", doctor ?? "", type ?? "", status ?? "Scheduled");
-  const created = db.prepare("SELECT * FROM appointments WHERE id = ?").get(info.lastInsertRowid);
-  res.status(201).json(created);
 });
 
-appointmentsRouter.patch("/:id", (req, res) => {
-  const { status } = req.body as Partial<Appointment>;
-  if (!status) return res.status(400).json({ error: "status is required" });
-  db.prepare("UPDATE appointments SET status = ? WHERE id = ?").run(status, req.params.id);
-  const updated = db.prepare("SELECT * FROM appointments WHERE id = ?").get(req.params.id);
-  res.json(updated);
+appointmentsRouter.post("/", async (req, res) => {
+  try {
+    const { time, patient, guardian, doctor, type, status } = req.body;
+    if (!time || !patient) {
+      return res.status(400).json({ error: "time and patient are required" });
+    }
+    const result = await query(
+      "INSERT INTO appointments (time, patient, guardian, doctor, type, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [time, patient, guardian ?? "", doctor ?? "", type ?? "", status ?? "Scheduled"]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create appointment" });
+  }
 });
 
-appointmentsRouter.delete("/:id", (req, res) => {
-  db.prepare("DELETE FROM appointments WHERE id = ?").run(req.params.id);
-  res.status(204).end();
+appointmentsRouter.patch("/:id", async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ error: "status is required" });
+    const result = await query("UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *", [status, req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Appointment not found" });
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update appointment" });
+  }
+});
+
+appointmentsRouter.delete("/:id", async (req, res) => {
+  try {
+    await query("DELETE FROM appointments WHERE id = $1", [req.params.id]);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete appointment" });
+  }
 });

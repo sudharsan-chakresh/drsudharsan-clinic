@@ -1,27 +1,36 @@
 import { Router } from "express";
-import { db } from "../db";
-import { Patient } from "../types";
+import { query } from "../db";
 
 export const patientsRouter = Router();
 
-patientsRouter.get("/", (_req, res) => {
-  const rows = db.prepare("SELECT * FROM patients ORDER BY id").all();
-  res.json(rows);
+patientsRouter.get("/", async (_req, res) => {
+  try {
+    const result = await query("SELECT * FROM patients ORDER BY id");
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch patients" });
+  }
 });
 
-patientsRouter.post("/", (req, res) => {
-  const { name, guardian, age, phone, blood } = req.body as Partial<Patient>;
-  if (!name) return res.status(400).json({ error: "name is required" });
-  const info = db
-    .prepare(
-      "INSERT INTO patients (name, guardian, age, phone, blood, last_visit) VALUES (?, ?, ?, ?, ?, ?)"
-    )
-    .run(name, guardian ?? "", age ?? "", phone ?? "", blood ?? "", "—");
-  const created = db.prepare("SELECT * FROM patients WHERE id = ?").get(info.lastInsertRowid);
-  res.status(201).json(created);
+patientsRouter.post("/", async (req, res) => {
+  try {
+    const { name, guardian, age, phone, blood } = req.body;
+    if (!name) return res.status(400).json({ error: "name is required" });
+    const result = await query(
+      "INSERT INTO patients (name, guardian, age, phone, blood, last_visit) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [name, guardian ?? "", age ?? "", phone ?? "", blood ?? "", "—"]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create patient" });
+  }
 });
 
-patientsRouter.delete("/:id", (req, res) => {
-  db.prepare("DELETE FROM patients WHERE id = ?").run(req.params.id);
-  res.status(204).end();
+patientsRouter.delete("/:id", async (req, res) => {
+  try {
+    await query("DELETE FROM patients WHERE id = $1", [req.params.id]);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete patient" });
+  }
 });

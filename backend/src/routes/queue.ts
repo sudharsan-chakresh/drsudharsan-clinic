@@ -1,42 +1,55 @@
 import { Router } from "express";
-import { db } from "../db";
-import { QueueEntry, QueueStage } from "../types";
+import { query } from "../db";
 
 export const queueRouter = Router();
 
-const STAGE_ORDER: QueueStage[] = ["waiting", "consult", "done"];
+const STAGE_ORDER = ["waiting", "consult", "done"];
 
-queueRouter.get("/", (_req, res) => {
-  const rows = db.prepare("SELECT * FROM queue ORDER BY id").all();
-  res.json(rows);
+queueRouter.get("/", async (_req, res) => {
+  try {
+    const result = await query("SELECT * FROM queue ORDER BY id");
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch queue" });
+  }
 });
 
-queueRouter.post("/", (req, res) => {
-  const { patient, doctor } = req.body as Partial<QueueEntry>;
-  if (!patient) return res.status(400).json({ error: "patient is required" });
-  const count = (db.prepare("SELECT COUNT(*) AS c FROM queue").get() as any).c;
-  const token = `T-${17 + count}`;
-  const info = db
-    .prepare("INSERT INTO queue (token, patient, doctor, stage) VALUES (?, ?, ?, 'waiting')")
-    .run(token, patient, doctor ?? "");
-  const created = db.prepare("SELECT * FROM queue WHERE id = ?").get(info.lastInsertRowid);
-  res.status(201).json(created);
+queueRouter.post("/", async (req, res) => {
+  try {
+    const { patient, doctor } = req.body;
+    if (!patient) return res.status(400).json({ error: "patient is required" });
+    const countResult = await query("SELECT COUNT(*) AS c FROM queue");
+    const count = parseInt(countResult.rows[0].c);
+    const token = `T-${17 + count}`;
+    const result = await query(
+      "INSERT INTO queue (token, patient, doctor, stage) VALUES ($1, $2, $3, 'waiting') RETURNING *",
+      [token, patient, doctor ?? ""]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create queue entry" });
+  }
 });
 
-// Advance a queue entry to its next stage: waiting -> consult -> done
-queueRouter.patch("/:id/advance", (req, res) => {
-  const entry = db.prepare("SELECT * FROM queue WHERE id = ?").get(req.params.id) as
-    | QueueEntry
-    | undefined;
-  if (!entry) return res.status(404).json({ error: "not found" });
-  const currentIndex = STAGE_ORDER.indexOf(entry.stage);
-  const nextStage = STAGE_ORDER[Math.min(currentIndex + 1, STAGE_ORDER.length - 1)];
-  db.prepare("UPDATE queue SET stage = ? WHERE id = ?").run(nextStage, req.params.id);
-  const updated = db.prepare("SELECT * FROM queue WHERE id = ?").get(req.params.id);
-  res.json(updated);
+queueRouter.patch("/:id/advance", async (req, res) => {
+  try {
+    const entryResult = await query("SELECT * FROM queue WHERE id = $1", [req.params.id]);
+    if (entryResult.rows.length === 0) return res.status(404).json({ error: "not found" });
+    const entry = entryResult.rows[0];
+    const currentIndex = STAGE_ORDER.indexOf(entry.stage);
+    const nextStage = STAGE_ORDER[Math.min(currentIndex + 1, STAGE_ORDER.length - 1)];
+    const result = await query("UPDATE queue SET stage = $1 WHERE id = $2 RETURNING *", [nextStage, req.params.id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to advance queue entry" });
+  }
 });
 
-queueRouter.delete("/:id", (req, res) => {
-  db.prepare("DELETE FROM queue WHERE id = ?").run(req.params.id);
-  res.status(204).end();
+queueRouter.delete("/:id", async (req, res) => {
+  try {
+    await query("DELETE FROM queue WHERE id = $1", [req.params.id]);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete queue entry" });
+  }
 });
