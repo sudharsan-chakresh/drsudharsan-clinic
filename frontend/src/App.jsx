@@ -117,12 +117,3 @@ export default function App() {
     </div>
   );
 }
-          {section === "billing" && <Billing invoices={invoices} refresh={refresh} />}
-          {section === "staff" && (
-            <Staff staff={staff} staffTab={staffTab} setStaffTab={setStaffTab} refresh={refresh} />
-          )}
-        </div>
-      </main>
-    </div>
-  );
-}

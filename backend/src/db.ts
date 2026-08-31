@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 
-const dbPath = path.join(__dirname, "..", "clinic.db");
+const dbPath = process.env.VERCEL ? "/tmp/clinic.db" : path.join(__dirname, "..", "clinic.db");
 export const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 
@@ -93,6 +93,7 @@ function seedIfEmpty() {
     invoices: (db.prepare("SELECT COUNT(*) AS c FROM invoices").get() as any).c,
     staff: (db.prepare("SELECT COUNT(*) AS c FROM staff").get() as any).c,
     users: (db.prepare("SELECT COUNT(*) AS c FROM users").get() as any).c,
+    consultations: (db.prepare("SELECT COUNT(*) AS c FROM consultations").get() as any).c,
   };
 
   if (counts.appointments === 0) {
@@ -169,6 +170,16 @@ function seedIfEmpty() {
     insertUser.run("pharmacist@clinic.com", "pharm123", "Karthik Suresh", "Pharmacist", "98765 11220", now);
     insertUser.run("receptionist@clinic.com", "recep123", "Lavanya Muthu", "Receptionist", "90031 44556", now);
     insertUser.run("patient@clinic.com", "patient123", "Priya Krishnan", "Patient", "98410 22110", now);
+  }
+
+  if (counts.consultations === 0) {
+    const insert = db.prepare(
+      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    insert.run(1, 1, 2, "completed", "https://meet.google.com/abc-def-ghi", "Paracetamol 5ml BD", "Follow up in 3 days", "2026-08-25T09:15:00.000Z", "2026-08-25T09:45:00.000Z");
+    insert.run(2, 2, 3, "scheduled", "https://meet.google.com/xyz-uvw-rst", null, "Growth review consultation", "2026-08-27T11:00:00.000Z", null);
+    insert.run(3, 3, 2, "in-progress", null, "Amoxicillin 5ml TDS", "Fever check follow-up", "2026-08-28T10:30:00.000Z", null);
+    insert.run(4, 4, 3, "scheduled", null, null, "OPD review", "2026-08-29T11:00:00.000Z", null);
   }
 }
 

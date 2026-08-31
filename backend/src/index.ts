@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import "./db"; // ensures schema + seed run on startup
+import "./db";
 
 import { appointmentsRouter } from "./routes/appointments";
 import { patientsRouter } from "./routes/patients";
@@ -28,6 +28,10 @@ app.use("/api/invoices", billingRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/consultations", consultationsRouter);
 
-app.listen(PORT, () => {
-  console.log(`Clinic backend running at http://localhost:${PORT}`);
-});
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  app.listen(PORT, () => {
+    console.log(`Clinic backend running at http://localhost:${PORT}`);
+  });
+}

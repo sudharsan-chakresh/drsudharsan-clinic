@@ -138,16 +138,6 @@ export default function Sidebar({ section, setSection, staffTab, setStaffTab, us
           Every visit, one step forward.
         </div>
       </div>
-        <div
-          style={{
-            display: "flex", alignItems: "center", gap: 3, color: "#5C8985",
-            fontSize: 11, padding: "10px 14px", borderTop: "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <Footprints size={12} />
-          Every visit, one step forward.
-        </div>
-      </div>
     </aside>
   );
 }
