@@ -13,6 +13,30 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import { api } from "./api.js";
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <h2>Something went wrong</h2>
+          <p style={{ color: "var(--danger)" }}>{this.state.error?.message}</p>
+          <button onClick={() => { localStorage.clear(); window.location.reload(); }}>
+            Clear & Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [section, setSection] = useState("dashboard");
@@ -32,7 +56,13 @@ export default function App() {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        if (parsed && parsed.id && parsed.email && parsed.role) {
+          setUser(parsed);
+        } else {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+        }
       } catch {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
@@ -90,10 +120,14 @@ export default function App() {
   };
 
   if (!user) {
-    return authView === "register" ? (
-      <Register onSwitchToLogin={() => setAuthView("login")} />
-    ) : (
-      <Login onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthView("register")} />
+    return (
+      <ErrorBoundary>
+        {authView === "register" ? (
+          <Register onSwitchToLogin={() => setAuthView("login")} />
+        ) : (
+          <Login onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthView("register")} />
+        )}
+      </ErrorBoundary>
     );
   }
 
@@ -112,25 +146,27 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
-      <Sidebar section={section} setSection={setSection} staffTab={staffTab} setStaffTab={setStaffTab} user={user} onLogout={handleLogout} />
-      <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <Topbar user={user} onLogout={handleLogout} />
-        <div style={{ padding: "clamp(14px, 4vw, 26px) clamp(14px, 5vw, 28px) clamp(20px, 6vw, 40px)", overflowY: "auto" }}>
-          {section === "dashboard" && (
-            <Dashboard appointments={appointments} queue={queue} stock={stock} staff={staff} invoices={invoices} user={user} />
-          )}
-          {section === "appointments" && <Appointments appointments={appointments} refresh={refresh} />}
-          {section === "patients" && <Patients patients={patients} refresh={refresh} />}
-          {section === "queue" && <Queue queue={queue} refresh={refresh} />}
-          {section === "stock" && <Stock stock={stock} refresh={refresh} />}
-          {section === "billing" && <Billing invoices={invoices} refresh={refresh} />}
-          {section === "staff" && (
-            <Staff staff={staff} staffTab={staffTab} setStaffTab={setStaffTab} refresh={refresh} />
-          )}
-          {section === "consultation" && <Consultation user={user} refresh={refresh} />}
-        </div>
-      </main>
-    </div>
+    <ErrorBoundary>
+      <div className="app-shell">
+        <Sidebar section={section} setSection={setSection} staffTab={staffTab} setStaffTab={setStaffTab} user={user} onLogout={handleLogout} />
+        <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+          <Topbar user={user} onLogout={handleLogout} />
+          <div style={{ padding: "clamp(14px, 4vw, 26px) clamp(14px, 5vw, 28px) clamp(20px, 6vw, 40px)", overflowY: "auto" }}>
+            {section === "dashboard" && (
+              <Dashboard appointments={appointments} queue={queue} stock={stock} staff={staff} invoices={invoices} user={user} />
+            )}
+            {section === "appointments" && <Appointments appointments={appointments} refresh={refresh} />}
+            {section === "patients" && <Patients patients={patients} refresh={refresh} />}
+            {section === "queue" && <Queue queue={queue} refresh={refresh} />}
+            {section === "stock" && <Stock stock={stock} refresh={refresh} />}
+            {section === "billing" && <Billing invoices={invoices} refresh={refresh} />}
+            {section === "staff" && (
+              <Staff staff={staff} staffTab={staffTab} setStaffTab={setStaffTab} refresh={refresh} />
+            )}
+            {section === "consultation" && <Consultation user={user} refresh={refresh} />}
+          </div>
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 }

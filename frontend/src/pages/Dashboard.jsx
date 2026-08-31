@@ -16,7 +16,7 @@ export default function Dashboard({ appointments, queue, stock, staff, invoices,
   const pendingBilling = invoices.filter((i) => i.status === "Pending").length;
 
   const getGreeting = () => {
-    if (!user) return "Good morning";
+    if (!user || !user.name) return "Good morning";
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     if (user.role === "Patient") return `${timeGreeting}, ${user.name}`;
