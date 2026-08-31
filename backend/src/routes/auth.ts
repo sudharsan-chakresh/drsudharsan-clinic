@@ -21,8 +21,9 @@ authRouter.post("/login", async (req, res) => {
     const token = generateToken(user.id);
     const { password: _, ...userWithoutPassword } = user;
     res.json({ user: userWithoutPassword, token });
-  } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+  } catch (error: any) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed: " + error.message });
   }
 });
 

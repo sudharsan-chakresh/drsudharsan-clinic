@@ -25,7 +25,8 @@ app.get("/api/health", async (_req, res) => {
     const result = await query("SELECT NOW() as time");
     res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "connected", time: result.rows[0].time });
   } catch (error: any) {
-    res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "disconnected", error: error.message });
+    console.error("Health check error:", error);
+    res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "disconnected", error: error.message, code: error.code });
   }
 });
 
