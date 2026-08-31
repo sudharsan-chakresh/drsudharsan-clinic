@@ -20,8 +20,26 @@ const PORT = process.env.PORT || 9876;
 app.use(cors());
 app.use(express.json());
 
+let dbInitialized = false;
+
+async function ensureDb() {
+  if (dbInitialized) return;
+  dbInitialized = true;
+  try {
+    await initDb();
+    await seedIfEmpty();
+    await initDrugMaster();
+    await seedDrugs();
+    console.log("Database initialized and seeded");
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    dbInitialized = false;
+  }
+}
+
 app.get("/api/health", async (_req, res) => {
   try {
+    await ensureDb();
     const result = await query("SELECT NOW() as time");
     res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "connected", time: result.rows[0].time });
   } catch (error: any) {
@@ -56,28 +74,25 @@ app.use("/api/consultations", authenticate, consultationsRouter);
 app.use("/api/drugs", authenticate, drugsRouter);
 
 async function start() {
-  try {
-    console.log("Starting backend...");
-    console.log("DATABASE_URL set:", !!process.env.DATABASE_URL);
-    console.log("JWT_SECRET set:", !!process.env.JWT_SECRET);
+  console.log("Starting backend...");
+  console.log("DATABASE_URL set:", !!process.env.DATABASE_URL);
+  console.log("JWT_SECRET set:", !!process.env.JWT_SECRET);
 
-    await initDb();
-    console.log("Database initialized");
+  if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_URL is not set!");
+  }
 
-    await seedIfEmpty();
-    console.log("Database seeded");
-
-    await initDrugMaster();
-    await seedDrugs();
-    console.log("Drug master initialized");
-
-    if (!process.env.VERCEL) {
-      app.listen(PORT, () => {
-        console.log(`Clinic backend running at http://localhost:${PORT}`);
-      });
+  if (!process.env.VERCEL) {
+    try {
+      await ensureDb();
+      console.log("Database initialized and seeded");
+    } catch (error) {
+      console.error("Failed to initialize database:", error);
     }
-  } catch (error) {
-    console.error("Failed to start server:", error);
+
+    app.listen(PORT, () => {
+      console.log(`Clinic backend running at http://localhost:${PORT}`);
+    });
   }
 }
 
