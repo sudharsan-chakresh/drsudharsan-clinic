@@ -10,12 +10,14 @@ import Billing from "./pages/Billing.jsx";
 import Staff from "./pages/Staff.jsx";
 import Consultation from "./pages/Consultation.jsx";
 import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
 import { api } from "./api.js";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [section, setSection] = useState("dashboard");
   const [staffTab, setStaffTab] = useState("doctors");
+  const [authView, setAuthView] = useState("login");
 
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -77,7 +79,11 @@ export default function App() {
   }, [user, refresh]);
 
   if (!user) {
-    return <Login onLoginSuccess={setUser} />;
+    return authView === "register" ? (
+      <Register onSwitchToLogin={() => setAuthView("login")} />
+    ) : (
+      <Login onLoginSuccess={setUser} onSwitchToRegister={() => setAuthView("register")} />
+    );
   }
 
   if (loading) {
@@ -101,7 +107,7 @@ export default function App() {
         <Topbar user={user} onLogout={handleLogout} />
         <div style={{ padding: "clamp(14px, 4vw, 26px) clamp(14px, 5vw, 28px) clamp(20px, 6vw, 40px)", overflowY: "auto" }}>
           {section === "dashboard" && (
-            <Dashboard appointments={appointments} queue={queue} stock={stock} staff={staff} invoices={invoices} />
+            <Dashboard appointments={appointments} queue={queue} stock={stock} staff={staff} invoices={invoices} user={user} />
           )}
           {section === "appointments" && <Appointments appointments={appointments} refresh={refresh} />}
           {section === "patients" && <Patients patients={patients} refresh={refresh} />}

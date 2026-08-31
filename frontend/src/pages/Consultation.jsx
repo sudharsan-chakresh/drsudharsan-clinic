@@ -130,7 +130,7 @@ export default function Consultation({ user, refresh }) {
 
       {showForm && (
         <Panel title={editingId ? "Edit Consultation" : "New Consultation"} style={{ marginBottom: "20px" }}>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div className="field-label">
                 <label>Patient ID</label>
@@ -152,6 +152,72 @@ export default function Consultation({ user, refresh }) {
               </div>
             </div>
 
+            <div style={{ padding: "14px", background: "var(--surface-alt)", borderRadius: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Vitals</div>
+              <div className="field-label" style={{ marginBottom: 0 }}>
+                <label>Vitals</label>
+                <input
+                  type="text"
+                  className="fld"
+                  placeholder="Temp: 99°F, HR: 110bpm, RR: 28/min, Wt: 14kg..."
+                  value={formData.vitals}
+                  onChange={(e) => setFormData({ ...formData, vitals: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ padding: "14px", background: "var(--surface-alt)", borderRadius: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>History</div>
+              <div className="field-label" style={{ marginBottom: 0 }}>
+                <label>History</label>
+                <textarea
+                  className="fld"
+                  placeholder="Past medical history, allergies, previous medications..."
+                  value={formData.history}
+                  onChange={(e) => setFormData({ ...formData, history: e.target.value })}
+                  style={{ minHeight: "70px", resize: "vertical", fontFamily: "inherit" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ padding: "14px", background: "var(--surface-alt)", borderRadius: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Diagnosis</div>
+              <div className="field-label" style={{ marginBottom: 0 }}>
+                <label>Diagnosis</label>
+                <input
+                  type="text"
+                  className="fld"
+                  placeholder="Primary diagnosis..."
+                  value={formData.diagnosis}
+                  onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ padding: "14px", background: "var(--surface-alt)", borderRadius: "10px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Treatment</div>
+              <div className="field-label" style={{ marginBottom: 0 }}>
+                <label>Prescription</label>
+                <textarea
+                  className="fld"
+                  placeholder="Medication and dosage details..."
+                  value={formData.prescription}
+                  onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
+                  style={{ minHeight: "80px", resize: "vertical", fontFamily: "inherit" }}
+                />
+              </div>
+              <div className="field-label" style={{ marginBottom: 0 }}>
+                <label>Notes</label>
+                <textarea
+                  className="fld"
+                  placeholder="Additional consultation notes..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  style={{ minHeight: "60px", resize: "vertical", fontFamily: "inherit" }}
+                />
+              </div>
+            </div>
+
             <div className="field-label">
               <label>Video Link (Zoom/Meet URL)</label>
               <input
@@ -160,61 +226,6 @@ export default function Consultation({ user, refresh }) {
                 placeholder="https://meet.google.com/xxx-xxxx-xxx"
                 value={formData.video_link}
                 onChange={(e) => setFormData({ ...formData, video_link: e.target.value })}
-              />
-            </div>
-
-            <div className="field-label">
-              <label>Prescription</label>
-              <textarea
-                className="fld"
-                placeholder="Medication and dosage details..."
-                value={formData.prescription}
-                onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
-                style={{ minHeight: "80px", resize: "vertical", fontFamily: "inherit" }}
-              />
-            </div>
-
-            <div className="field-label">
-              <label>Notes</label>
-              <textarea
-                className="fld"
-                placeholder="Additional consultation notes..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                style={{ minHeight: "80px", resize: "vertical", fontFamily: "inherit" }}
-              />
-            </div>
-
-            <div className="field-label">
-              <label>Vitals</label>
-              <input
-                type="text"
-                className="fld"
-                placeholder="Temp: 99°F, HR: 110bpm, RR: 28/min..."
-                value={formData.vitals}
-                onChange={(e) => setFormData({ ...formData, vitals: e.target.value })}
-              />
-            </div>
-
-            <div className="field-label">
-              <label>History</label>
-              <textarea
-                className="fld"
-                placeholder="Past medical history, allergies, etc..."
-                value={formData.history}
-                onChange={(e) => setFormData({ ...formData, history: e.target.value })}
-                style={{ minHeight: "60px", resize: "vertical", fontFamily: "inherit" }}
-              />
-            </div>
-
-            <div className="field-label">
-              <label>Diagnosis</label>
-              <input
-                type="text"
-                className="fld"
-                placeholder="Primary diagnosis..."
-                value={formData.diagnosis}
-                onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
               />
             </div>
 

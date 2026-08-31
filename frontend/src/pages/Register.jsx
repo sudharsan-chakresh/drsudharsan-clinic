@@ -2,23 +2,21 @@ import React, { useState } from "react";
 import { api } from "../api.js";
 import logo from "../public/logo.png";
 
-export default function Login({ onLoginSuccess, onSwitchToRegister }) {
-  const [email, setEmail] = useState("admin@clinic.com");
-  const [password, setPassword] = useState("admin123");
+export default function Register({ onSwitchToLogin }) {
+  const [form, setForm] = useState({ name: "", email: "", password: "", guardian: "", phone: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const user = await api.login(email, password);
-      localStorage.setItem("user", JSON.stringify(user));
-      onLoginSuccess(user);
+      await api.register(form);
+      onSwitchToLogin();
     } catch (err) {
-      setError(err.message || "Login failed");
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -44,9 +42,9 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
         <div style={{ textAlign: "center", marginBottom: "30px" }}>
           <img src={logo} alt="Logo" style={{ width: "60px", height: "60px", marginBottom: "16px", borderRadius: "12px" }} />
           <h1 className="display-font" style={{ fontSize: "28px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
-            Dr. Sudharsan's
+            Patient Registration
           </h1>
-          <p style={{ fontSize: "14px", color: "var(--muted)", marginTop: "4px" }}>Children's Clinic</p>
+          <p style={{ fontSize: "14px", color: "var(--muted)", marginTop: "4px" }}>Create your account</p>
         </div>
 
         {error && (
@@ -63,15 +61,39 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Full Name</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="fld"
+              placeholder="Child's full name"
+              required
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Guardian Name</label>
+            <input
+              type="text"
+              value={form.guardian}
+              onChange={(e) => setForm({ ...form, guardian: e.target.value })}
+              className="fld"
+              placeholder="Parent/Guardian name"
+            />
+          </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Email</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="fld"
               placeholder="your@email.com"
+              required
             />
           </div>
 
@@ -79,10 +101,22 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
             <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Password</label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="fld"
               placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>Phone</label>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="fld"
+              placeholder="98410 22110"
             />
           </div>
 
@@ -92,19 +126,15 @@ export default function Login({ onLoginSuccess, onSwitchToRegister }) {
             disabled={loading}
             style={{ marginTop: "10px", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
         <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <p style={{ fontSize: "12px", color: "var(--muted-light)", margin: 0 }}>Demo credentials:</p>
-          <p style={{ fontSize: "11px", color: "var(--muted-light)", margin: "4px 0" }}>Admin: admin@clinic.com / admin123</p>
-          <p style={{ fontSize: "11px", color: "var(--muted-light)", margin: "4px 0" }}>Doctor: doctor1@clinic.com / doctor123</p>
-          <p style={{ fontSize: "11px", color: "var(--muted-light)", margin: "4px 0" }}>Patient: patient@clinic.com / patient123</p>
-          <p style={{ fontSize: "12px", color: "var(--muted-light)", marginTop: "12px" }}>
-            New patient?{" "}
-            <button onClick={onSwitchToRegister} style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: 600, cursor: "pointer", fontSize: "12px" }}>
-              Register here
+          <p style={{ fontSize: "12px", color: "var(--muted-light)", margin: 0 }}>
+            Already have an account?{" "}
+            <button onClick={onSwitchToLogin} style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: 600, cursor: "pointer", fontSize: "12px" }}>
+              Login here
             </button>
           </p>
         </div>

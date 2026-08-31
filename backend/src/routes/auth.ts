@@ -80,3 +80,27 @@ authRouter.get("/users/:id", (req, res) => {
 authRouter.post("/logout", (req, res) => {
   res.json({ success: true, message: "Logged out" });
 });
+
+// Patient self-registration
+authRouter.post("/register", (req, res) => {
+  try {
+    const { name, email, password, guardian, phone } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email, and password required" });
+    }
+
+    const created_at = new Date().toISOString();
+    const stmt = db.prepare(
+      "INSERT INTO users (email, password, name, role, phone, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+
+    stmt.run(email, password, name, "Patient", phone || null, created_at);
+    res.json({ success: true, message: "Registration successful" });
+  } catch (error: any) {
+    if (error.message.includes("UNIQUE constraint failed")) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+    res.status(500).json({ error: "Registration failed" });
+  }
+});

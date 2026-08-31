@@ -5,22 +5,22 @@ import {
 } from "lucide-react";
 import logo from "../public/logo.png";
 
-const NAV_GROUPS = [
+const ALL_NAV_GROUPS = [
   {
     label: "Clinical Operations",
     items: [
-      { key: "appointments", label: "Appointments", icon: Calendar },
-      { key: "patients", label: "Patient Register", icon: UserPlus },
-      { key: "queue", label: "OPD Queue", icon: ListOrdered },
-      { key: "consultation", label: "Consultations", icon: Video },
+      { key: "appointments", label: "Appointments", icon: Calendar, roles: ["Admin", "Doctor", "Receptionist", "Patient"] },
+      { key: "patients", label: "Patient Register", icon: UserPlus, roles: ["Admin", "Doctor", "Receptionist", "Pharmacist"] },
+      { key: "queue", label: "OPD Queue", icon: ListOrdered, roles: ["Admin", "Doctor", "Receptionist", "Pharmacist"] },
+      { key: "consultation", label: "Consultations", icon: Video, roles: ["Admin", "Doctor", "Patient"] },
     ],
   },
   {
     label: "Resources & Access",
     items: [
-      { key: "stock", label: "Stock Inventory", icon: Package },
-      { key: "billing", label: "Central Billing", icon: Receipt },
-      { key: "staff", label: "Staff Access", icon: Users },
+      { key: "stock", label: "Stock Inventory", icon: Package, roles: ["Admin", "Doctor", "Pharmacist"] },
+      { key: "billing", label: "Central Billing", icon: Receipt, roles: ["Admin", "Receptionist"] },
+      { key: "staff", label: "Staff Access", icon: Users, roles: ["Admin"] },
     ],
   },
 ];
@@ -33,6 +33,11 @@ export const STAFF_TABS = [
 ];
 
 export default function Sidebar({ section, setSection, staffTab, setStaffTab, user, onLogout }) {
+  const role = user?.role;
+  const navGroups = ALL_NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.roles || item.roles.includes(role)),
+  })).filter((group) => group.items.length > 0);
   return (
     <aside className="sidebar">
       <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "4px 10px 22px" }}>
@@ -70,7 +75,7 @@ export default function Sidebar({ section, setSection, staffTab, setStaffTab, us
         Dashboard
       </button>
 
-      {NAV_GROUPS.map((group) => (
+      {navGroups.map((group) => (
         <div key={group.label} style={{ marginTop: 14 }}>
           <div className="nav-group-label">{group.label}</div>
           {group.items.map((item) => (
