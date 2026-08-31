@@ -88,6 +88,8 @@ db.exec(`
     respiratory_rate TEXT,
     weight TEXT,
     height TEXT,
+    food_recommendations TEXT,
+    general_instructions TEXT,
     created_at TEXT NOT NULL,
     completed_at TEXT
   );
@@ -107,6 +109,8 @@ addColumn("heart_rate", "TEXT");
 addColumn("respiratory_rate", "TEXT");
 addColumn("weight", "TEXT");
 addColumn("height", "TEXT");
+addColumn("food_recommendations", "TEXT");
+addColumn("general_instructions", "TEXT");
 
 function seedIfEmpty() {
   const counts = {

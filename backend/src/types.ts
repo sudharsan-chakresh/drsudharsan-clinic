@@ -87,6 +87,8 @@ export interface Consultation {
   respiratory_rate?: string;
   weight?: string;
   height?: string;
+  food_recommendations?: string;
+  general_instructions?: string;
   created_at: string;
   completed_at?: string;
 }
