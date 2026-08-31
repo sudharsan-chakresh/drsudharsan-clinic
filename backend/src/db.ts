@@ -34,7 +34,8 @@ export async function initDb() {
       age TEXT,
       phone TEXT,
       blood TEXT,
-      last_visit TEXT DEFAULT '—'
+      last_visit TEXT DEFAULT '—',
+      deleted_at TIMESTAMP DEFAULT NULL
     );
 
     CREATE TABLE IF NOT EXISTS queue (
@@ -68,7 +69,8 @@ export async function initDb() {
       role TEXT NOT NULL,
       shift TEXT,
       phone TEXT,
-      status TEXT NOT NULL DEFAULT 'On duty'
+      status TEXT NOT NULL DEFAULT 'On duty',
+      deleted_at TIMESTAMP DEFAULT NULL
     );
 
     CREATE TABLE IF NOT EXISTS users (
