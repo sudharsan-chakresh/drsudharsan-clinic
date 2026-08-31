@@ -37,15 +37,30 @@ async function ensureDb() {
   }
 }
 
-app.get("/api/health", async (_req, res) => {
+app.get("/api/ping", (_req, res) => {
+  res.json({ status: "pong", time: new Date().toISOString() });
+});
+  const health: any = {
+    status: "ok",
+    clinic: "Dr. Sudharsan's Children's Clinic",
+    hasDbUrl: !!process.env.DATABASE_URL,
+    nodeEnv: process.env.NODE_ENV,
+    vercel: !!process.env.VERCEL,
+  };
+
   try {
     await ensureDb();
     const result = await query("SELECT NOW() as time");
-    res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "connected", time: result.rows[0].time });
+    health.db = "connected";
+    health.time = result.rows[0].time;
   } catch (error: any) {
     console.error("Health check error:", error);
-    res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "disconnected", error: error.message, code: error.code });
+    health.db = "disconnected";
+    health.error = error.message;
+    health.code = error.code;
   }
+
+  res.json(health);
 });
 
 app.get("/api/test-login", async (req, res) => {
