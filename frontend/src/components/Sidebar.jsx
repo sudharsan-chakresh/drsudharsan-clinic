@@ -1,7 +1,7 @@
 import React from "react";
 import {
   LayoutDashboard, Calendar, UserPlus, ListOrdered, Package, Receipt,
-  Users, Stethoscope, Pill, ClipboardList, Sparkles, ChevronDown, Footprints, Video, LogOut,
+  Users, Stethoscope, Pill, ClipboardList, Sparkles, ChevronDown, Footprints, Video, LogOut, Database,
 } from "lucide-react";
 import logo from "../../public/logo.png";
 
@@ -19,8 +19,14 @@ const ALL_NAV_GROUPS = [
     label: "Resources & Access",
     items: [
       { key: "stock", label: "Stock Inventory", icon: Package, roles: ["Admin", "Doctor", "Pharmacist"] },
-      { key: "billing", label: "Central Billing", icon: Receipt, roles: ["Admin", "Receptionist"] },
+      { key: "billing", "label": "Central Billing", icon: Receipt, roles: ["Admin", "Receptionist"] },
       { key: "staff", label: "Staff Access", icon: Users, roles: ["Admin"] },
+    ],
+  },
+  {
+    label: "Masters",
+    items: [
+      { key: "drugs", label: "Drug Master", icon: Database, roles: ["Admin", "Doctor", "Pharmacist"] },
     ],
   },
 ];

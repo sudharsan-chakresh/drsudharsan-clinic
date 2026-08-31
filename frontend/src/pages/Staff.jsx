@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckCircle2, CircleDot } from "lucide-react";
+import { CheckCircle2, CircleDot, Edit2, Trash2, X } from "lucide-react";
 import Panel from "../components/Panel.jsx";
 import Field from "../components/Field.jsx";
 import Badge, { statusTone } from "../components/Badge.jsx";
@@ -17,22 +17,49 @@ const ACCESS_LABEL = {
 
 export default function Staff({ staff, staffTab, setStaffTab, refresh }) {
   const [show, setShow] = useState(false);
-  const [form, setForm] = useState({ name: "", shift: "", phone: "" });
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ name: "", shift: "", phone: "", status: "On duty" });
   const [saving, setSaving] = useState(false);
 
   const list = staff.filter((s) => s.role === staffTab);
+
+  function startEdit(s) {
+    setEditing(s.id);
+    setForm({ name: s.name, shift: s.shift || "", phone: s.phone || "", status: s.status });
+    setShow(false);
+  }
+
+  function cancelEdit() {
+    setEditing(null);
+    setForm({ name: "", shift: "", phone: "", status: "On duty" });
+  }
 
   async function submit(e) {
     e.preventDefault();
     if (!form.name || saving) return;
     setSaving(true);
     try {
-      await api.createStaffMember({ ...form, role: staffTab });
-      setForm({ name: "", shift: "", phone: "" });
+      if (editing) {
+        await api.updateStaffMember(editing, { ...form, role: staffTab });
+      } else {
+        await api.createStaffMember({ ...form, role: staffTab });
+      }
+      setForm({ name: "", shift: "", phone: "", status: "On duty" });
       setShow(false);
+      setEditing(null);
       await refresh();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm("Deactivate this staff member?")) return;
+    try {
+      await api.deleteStaffMember(id);
+      await refresh();
+    } catch (err) {
+      alert("Failed to delete");
     }
   }
 
@@ -52,18 +79,23 @@ export default function Staff({ staff, staffTab, setStaffTab, refresh }) {
         ))}
       </div>
 
-      <Panel title={`${list.length} ${staffTab}`} action={<PrimaryButton onClick={() => setShow((s) => !s)}>Add {staffTab.slice(0, -1)}</PrimaryButton>}>
-        {show && (
-          <form onSubmit={submit} className="form-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr auto auto" }}>
+      <Panel title={`${list.length} ${staffTab}`} action={
+        <PrimaryButton onClick={() => { setShow((s) => !s); setEditing(null); setForm({ name: "", shift: "", phone: "", status: "On duty" }); }}>
+          {show ? "Cancel" : `Add ${staffTab.slice(0, -1)}`}
+        </PrimaryButton>
+      }>
+        {(show || editing) && (
+          <form onSubmit={submit} className="form-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr auto auto" }}>
             <Field label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Field label="Shift" placeholder="9:00 AM – 5:00 PM" value={form.shift} onChange={(e) => setForm({ ...form, shift: e.target.value })} />
             <Field label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            <div style={{ alignSelf: "end" }}><PrimaryButton icon={CheckCircle2}>{saving ? "Saving…" : "Save"}</PrimaryButton></div>
-            <div style={{ alignSelf: "end" }}><GhostButton onClick={() => setShow(false)}>Cancel</GhostButton></div>
+            <Field label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} />
+            <div style={{ alignSelf: "end" }}><PrimaryButton icon={CheckCircle2}>{saving ? "Saving…" : editing ? "Update" : "Save"}</PrimaryButton></div>
+            <div style={{ alignSelf: "end" }}><GhostButton onClick={cancelEdit} icon={X}>Cancel</GhostButton></div>
           </form>
         )}
         <table className="dtable">
-          <thead><tr><th>Name</th><th>Shift</th><th>Phone</th><th>Access</th><th>Status</th></tr></thead>
+          <thead><tr><th>Name</th><th>Shift</th><th>Phone</th><th>Access</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             {list.map((s) => (
               <tr key={s.id}>
@@ -76,6 +108,16 @@ export default function Staff({ staff, staffTab, setStaffTab, refresh }) {
                   </Badge>
                 </td>
                 <td><Badge tone={statusTone(s.status)}>{s.status}</Badge></td>
+                <td>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={() => startEdit(s)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)" }} title="Edit">
+                      <Edit2 size={14} />
+                    </button>
+                    <button onClick={() => handleDelete(s.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)" }} title="Delete">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

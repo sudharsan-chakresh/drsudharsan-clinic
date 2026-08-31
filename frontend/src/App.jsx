@@ -9,6 +9,7 @@ import Stock from "./pages/Stock.jsx";
 import Billing from "./pages/Billing.jsx";
 import Staff from "./pages/Staff.jsx";
 import Consultation from "./pages/Consultation.jsx";
+import Drugs from "./pages/Drugs.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import { api } from "./api.js";
@@ -164,6 +165,7 @@ export default function App() {
               <Staff staff={staff} staffTab={staffTab} setStaffTab={setStaffTab} refresh={refresh} />
             )}
             {section === "consultation" && <Consultation user={user} refresh={refresh} />}
+            {section === "drugs" && <Drugs />}
           </div>
         </main>
       </div>
