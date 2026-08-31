@@ -1,23 +1,236 @@
-# Dr. Sudharsan's Children's Clinic — Operations Console
+# Dr. Sudharsan's Children's Clinic Management System
 
-A clinic management application with two parts:
+A full-stack clinic management system built with React, Express, and SQLite. Features include appointment management, patient records, OPD queue management, stock inventory, billing, staff management, and doctor consultations with video call support.
 
-- **`backend/`** — Node.js + Express + TypeScript API, backed by SQLite (via `better-sqlite3`). No external database server needed; data lives in `backend/clinic.db`, created automatically on first run.
-- **`frontend/`** — React (Vite) single-page app, split into components and pages, calling the backend over `/api`.
+## Features
 
-## Sidebar structure
+✨ **Core Features**
+- Dashboard with key metrics and real-time updates
+- Appointment scheduling and management
+- Patient registration and medical history
+- OPD Queue management with growth path tracking
+- Stock inventory with reorder alerts
+- Central billing system with invoice management
+- Staff access control and management
+- **NEW:** Doctor consultations with video call links and prescriptions
 
-- **Dashboard**
-- **Clinical Operations** — Appointments, Patient Register, OPD Queue
-- **Resources & Access** — Stock Inventory, Central Billing, Staff Access (Doctors / Pharmacists / Receptionist / Housekeeping)
+🔐 **Authentication & Authorization**
+- Role-based login system (Admin, Doctor, Receptionist, Pharmacist, Patient)
+- Session management with localStorage
+- Secure password handling
 
-## Running it locally
+📱 **Responsive Design**
+- Mobile-first approach with responsive breakpoints (480px, 768px, 1024px)
+- Desktop, tablet, and mobile optimized layouts
+- Adaptive typography and spacing using CSS clamp()
+- Touch-friendly interface elements
 
-### 1. Backend
+## Tech Stack
 
+**Frontend:**
+- React 18 with Vite
+- Lucide React icons
+- Responsive CSS with modern techniques
+
+**Backend:**
+- Node.js with Express
+- TypeScript
+- SQLite with better-sqlite3
+- CORS enabled
+
+## Getting Started
+
+### Prerequisites
+- Node.js 16+
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/sudharsan-chakresh/drsudharsan-clinic.git
+cd drsudharsan-clinic
+```
+
+2. **Install backend dependencies**
 ```bash
 cd backend
 npm install
+```
+
+3. **Install frontend dependencies**
+```bash
+cd ../frontend
+npm install
+```
+
+### Running Locally
+
+1. **Start the backend** (from `backend/` directory)
+```bash
+npm run dev
+```
+Backend runs on `http://localhost:4000`
+
+2. **Start the frontend** (from `frontend/` directory)
+```bash
+npm run dev
+```
+Frontend runs on `http://localhost:5173`
+
+### Default Login Credentials
+
+- **Admin**: admin@clinic.com / admin123
+- **Doctor**: doctor1@clinic.com / doctor123
+- **Receptionist**: receptionist@clinic.com / recep123
+- **Pharmacist**: pharmacist@clinic.com / pharm123
+- **Patient**: patient@clinic.com / patient123
+
+## Project Structure
+
+```
+clinic-app/
+├── backend/
+│   ├── src/
+│   │   ├── db.ts           # Database schema & seeding
+│   │   ├── index.ts        # Express app
+│   │   ├── types.ts        # TypeScript types
+│   │   └── routes/
+│   │       ├── auth.ts     # Login & user management
+│   │       ├── consultations.ts  # Doctor consultations
+│   │       ├── appointments.ts
+│   │       ├── patients.ts
+│   │       ├── queue.ts
+│   │       ├── stock.ts
+│   │       ├── billing.ts
+│   │       └── staff.ts
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx         # Main app with auth flow
+│   │   ├── api.js          # API client
+│   │   ├── styles.css      # Global responsive styles
+│   │   ├── components/     # Reusable UI components
+│   │   └── pages/
+│   │       ├── Login.jsx
+│   │       ├── Dashboard.jsx
+│   │       ├── Consultation.jsx  # NEW: Video & prescriptions
+│   │       ├── Appointments.jsx
+│   │       ├── Patients.jsx
+│   │       ├── Queue.jsx
+│   │       ├── Stock.jsx
+│   │       ├── Billing.jsx
+│   │       └── Staff.jsx
+│   └── package.json
+├── vercel.json
+└── README.md
+```
+
+## API Endpoints
+
+### Authentication (NEW)
+- `POST /api/auth/login` - Login
+- `GET /api/auth/users` - List users
+- `POST /api/auth/users` - Create user
+- `POST /api/auth/logout` - Logout
+
+### Consultations (NEW)
+- `GET /api/consultations` - All consultations
+- `GET /api/consultations/doctor/:id` - Doctor's consultations
+- `GET /api/consultations/patient/:id` - Patient's consultations
+- `POST /api/consultations` - Create consultation
+- `PUT /api/consultations/:id` - Update consultation
+- `DELETE /api/consultations/:id` - Delete consultation
+
+### Other Resources
+- `/api/appointments` - Appointment management
+- `/api/patients` - Patient records
+- `/api/queue` - OPD queue
+- `/api/stock` - Inventory
+- `/api/invoices` - Billing
+- `/api/staff` - Staff management
+
+## Deployment on Vercel
+
+### Step 1: Push to GitHub
+```bash
+git add .
+git commit -m "Deploy clinic app to Vercel"
+git push origin main
+```
+
+### Step 2: Deploy to Vercel
+1. Visit [vercel.com](https://vercel.com)
+2. Click **"Add New..."** → **"Project"**
+3. Import from GitHub: select `sudharsan-chakresh/drsudharsan-clinic`
+4. Click **Deploy**
+
+Your app will be live at `https://<your-project-name>.vercel.app` 🚀
+
+## Features in Detail
+
+### 🔐 Login System
+- Role-based access control
+- 5 user roles: Admin, Doctor, Receptionist, Pharmacist, Patient
+- Persistent sessions with localStorage
+- User profile in navigation bar
+
+### 👨‍⚕️ Doctor Consultation (NEW)
+- Schedule video consultations between doctors and patients
+- Integrated video call links (Zoom, Google Meet, etc.)
+- Medical prescriptions with notes
+- Consultation status tracking (scheduled → in-progress → completed)
+- Filter by doctor or patient
+- Role-based access (Doctors can manage their consultations)
+
+### 📱 Responsive Design
+- Breakpoints: 480px (mobile), 768px (tablet), 1024px+ (desktop)
+- Sidebar collapses on mobile
+- Flexible grid layouts
+- Touch-optimized buttons and inputs
+- Adaptive font sizes with CSS clamp()
+
+## Recent Updates
+
+### Version 2.0 - Authentication & Consultation
+- ✅ Added comprehensive login system with 5 user roles
+- ✅ Implemented Doctor Consultation module
+- ✅ Added video call link support in consultations
+- ✅ Improved responsive design for mobile devices
+- ✅ Added user profile display in topbar
+- ✅ Prepared for Vercel deployment
+
+## Troubleshooting
+
+### Backend won't start
+```bash
+cd backend
+npm run dev
+# Check if port 4000 is available
+```
+
+### Frontend can't connect to backend
+- Ensure backend is running on `http://localhost:4000`
+- Check CORS headers in `backend/src/index.ts`
+- Frontend proxy should point to backend API
+
+### Database issues
+- Delete `backend/clinic.db*` files
+- Restart backend to re-seed data
+- Check database permissions
+
+## Contributing
+
+Contributions are welcome! Please open an issue or PR on GitHub.
+
+## License
+
+MIT License - See LICENSE file for details
+
+---
+
+**Built with ❤️ by Sudharsan Chakresh**  
+**For Dr. Sudharsan's Children's Clinic**
 npm run dev
 ```
 
