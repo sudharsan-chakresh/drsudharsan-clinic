@@ -17,7 +17,14 @@ const PORT = process.env.PORT || 9876;
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic" }));
+app.get("/api/health", async (_req, res) => {
+  try {
+    const result = await query("SELECT NOW() as time");
+    res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "connected", time: result.rows[0].time });
+  } catch (error: any) {
+    res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "disconnected", error: error.message });
+  }
+});
 
 app.use("/api/auth", authRouter);
 
@@ -31,9 +38,15 @@ app.use("/api/consultations", authenticate, consultationsRouter);
 
 async function start() {
   try {
+    console.log("Starting backend...");
+    console.log("DATABASE_URL set:", !!process.env.DATABASE_URL);
+    console.log("JWT_SECRET set:", !!process.env.JWT_SECRET);
+    
     await initDb();
+    console.log("Database initialized");
+    
     await seedIfEmpty();
-    console.log("Database initialized and seeded");
+    console.log("Database seeded");
 
     if (!process.env.VERCEL) {
       app.listen(PORT, () => {
