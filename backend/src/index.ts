@@ -9,6 +9,7 @@ import { stockRouter } from "./routes/stock";
 import { billingRouter } from "./routes/billing";
 import { staffRouter } from "./routes/staff";
 import { authRouter, authenticate } from "./routes/auth";
+import { generateToken } from "./auth";
 import { consultationsRouter } from "./routes/consultations";
 
 const app = express();
@@ -23,6 +24,20 @@ app.get("/api/health", async (_req, res) => {
     res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "connected", time: result.rows[0].time });
   } catch (error: any) {
     res.json({ status: "ok", clinic: "Dr. Sudharsan's Children's Clinic", db: "disconnected", error: error.message });
+  }
+});
+
+app.get("/api/test-login", async (req, res) => {
+  try {
+    const result = await query("SELECT id, email, name, role FROM users WHERE email = $1", ["admin@clinic.com"]);
+    if (result.rows.length === 0) {
+      return res.json({ error: "User not found" });
+    }
+    const user = result.rows[0];
+    const token = generateToken(user.id);
+    res.json({ user, token, message: "Use this token to test authenticated endpoints" });
+  } catch (error: any) {
+    res.json({ error: error.message });
   }
 });
 

@@ -96,13 +96,14 @@ authRouter.post("/register", async (req, res) => {
 });
 
 export function authenticate(req: any, res: any, next: any) {
-  const token = req.headers.authorization?.replace("Bearer ", "");
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace("Bearer ", "");
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized - no token" });
   }
   const decoded = verifyToken(token);
   if (!decoded) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized - invalid token" });
   }
   req.userId = decoded.userId;
   next();
