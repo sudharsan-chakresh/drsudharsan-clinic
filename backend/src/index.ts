@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { initDb, seedIfEmpty } from "./db";
+import { initDb, seedIfEmpty, query } from "./db";
 
 import { appointmentsRouter } from "./routes/appointments";
 import { patientsRouter } from "./routes/patients";
