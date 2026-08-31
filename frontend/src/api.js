@@ -64,4 +64,9 @@ export const api = {
   getStaff: (role) => request(role ? `/staff?role=${role}` : "/staff"),
   createStaffMember: (data) => request("/staff", { method: "POST", body: JSON.stringify(data) }),
   deleteStaffMember: (id) => request(`/staff/${id}`, { method: "DELETE" }),
+
+  getDrugs: (search) => request(search ? `/drugs?search=${encodeURIComponent(search)}` : "/drugs"),
+  getDrugCategories: () => request("/drugs/categories"),
+  createDrug: (data) => request("/drugs", { method: "POST", body: JSON.stringify(data) }),
+  deleteDrug: (id) => request(`/drugs/${id}`, { method: "DELETE" }),
 };

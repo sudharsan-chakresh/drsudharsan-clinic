@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { initDb, seedIfEmpty, query } from "./db";
+import { initDrugMaster, seedDrugs } from "./drugs";
 
 import { appointmentsRouter } from "./routes/appointments";
 import { patientsRouter } from "./routes/patients";
@@ -11,6 +12,7 @@ import { staffRouter } from "./routes/staff";
 import { authRouter, authenticate } from "./routes/auth";
 import { generateToken } from "./auth";
 import { consultationsRouter } from "./routes/consultations";
+import { drugsRouter } from "./routes/drugs";
 
 const app = express();
 const PORT = process.env.PORT || 9876;
@@ -50,18 +52,23 @@ app.use("/api/stock", authenticate, stockRouter);
 app.use("/api/invoices", authenticate, billingRouter);
 app.use("/api/staff", authenticate, staffRouter);
 app.use("/api/consultations", authenticate, consultationsRouter);
+app.use("/api/drugs", authenticate, drugsRouter);
 
 async function start() {
   try {
     console.log("Starting backend...");
     console.log("DATABASE_URL set:", !!process.env.DATABASE_URL);
     console.log("JWT_SECRET set:", !!process.env.JWT_SECRET);
-    
+
     await initDb();
     console.log("Database initialized");
-    
+
     await seedIfEmpty();
     console.log("Database seeded");
+
+    await initDrugMaster();
+    await seedDrugs();
+    console.log("Drug master initialized");
 
     if (!process.env.VERCEL) {
       app.listen(PORT, () => {

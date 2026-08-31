@@ -35,6 +35,7 @@ export default function Consultation({ user, refresh }) {
   const [consultations, setConsultations] = useState([]);
   const [patients, setPatients] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [drugs, setDrugs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -46,6 +47,7 @@ export default function Consultation({ user, refresh }) {
     loadConsultations();
     loadPatients();
     loadStaff();
+    loadDrugs();
   }, [user]);
 
   const loadConsultations = async () => {
@@ -82,6 +84,15 @@ export default function Consultation({ user, refresh }) {
       setStaff(data);
     } catch (err) {
       console.error("Failed to load staff:", err);
+    }
+  };
+
+  const loadDrugs = async () => {
+    try {
+      const data = await api.getDrugs();
+      setDrugs(data);
+    } catch (err) {
+      console.error("Failed to load drugs:", err);
     }
   };
 
@@ -441,7 +452,20 @@ export default function Consultation({ user, refresh }) {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                     <div className="field-label" style={{ marginBottom: 0 }}>
                       <label>Medicine Name (Generic) *</label>
-                      <input type="text" className="fld" placeholder="Paracetamol" value={med.name} onChange={(e) => updateMedicine(idx, "name", e.target.value)} required />
+                      <input
+                        type="text"
+                        className="fld"
+                        placeholder="Paracetamol"
+                        value={med.name}
+                        onChange={(e) => updateMedicine(idx, "name", e.target.value)}
+                        list={`drugs-list-${idx}`}
+                        required
+                      />
+                      <datalist id={`drugs-list-${idx}`}>
+                        {drugs.map((d) => (
+                          <option key={d.id} value={d.name} />
+                        ))}
+                      </datalist>
                     </div>
                     <div className="field-label" style={{ marginBottom: 0 }}>
                       <label>Dosage *</label>
