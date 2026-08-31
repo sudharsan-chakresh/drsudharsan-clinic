@@ -17,6 +17,9 @@ export default function Consultation({ user, refresh }) {
     video_link: "",
     prescription: "",
     notes: "",
+    vitals: "",
+    history: "",
+    diagnosis: "",
   });
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function Consultation({ user, refresh }) {
       } else {
         await api.createConsultation(formData);
       }
-      setFormData({ patient_id: "", doctor_id: "", video_link: "", prescription: "", notes: "" });
+            setFormData({ patient_id: "", doctor_id: "", video_link: "", prescription: "", notes: "", vitals: "", history: "", diagnosis: "" });
       setShowForm(false);
       setEditingId(null);
       loadConsultations();
@@ -116,7 +119,7 @@ export default function Consultation({ user, refresh }) {
           onClick={() => {
             setShowForm(!showForm);
             setEditingId(null);
-            setFormData({ patient_id: "", doctor_id: "", video_link: "", prescription: "", notes: "" });
+      setFormData({ patient_id: "", doctor_id: "", video_link: "", prescription: "", notes: "", vitals: "", history: "", diagnosis: "" });
           }}
           style={{ marginBottom: "20px" }}
         >
@@ -179,6 +182,39 @@ export default function Consultation({ user, refresh }) {
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 style={{ minHeight: "80px", resize: "vertical", fontFamily: "inherit" }}
+              />
+            </div>
+
+            <div className="field-label">
+              <label>Vitals</label>
+              <input
+                type="text"
+                className="fld"
+                placeholder="Temp: 99°F, HR: 110bpm, RR: 28/min..."
+                value={formData.vitals}
+                onChange={(e) => setFormData({ ...formData, vitals: e.target.value })}
+              />
+            </div>
+
+            <div className="field-label">
+              <label>History</label>
+              <textarea
+                className="fld"
+                placeholder="Past medical history, allergies, etc..."
+                value={formData.history}
+                onChange={(e) => setFormData({ ...formData, history: e.target.value })}
+                style={{ minHeight: "60px", resize: "vertical", fontFamily: "inherit" }}
+              />
+            </div>
+
+            <div className="field-label">
+              <label>Diagnosis</label>
+              <input
+                type="text"
+                className="fld"
+                placeholder="Primary diagnosis..."
+                value={formData.diagnosis}
+                onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
               />
             </div>
 
@@ -249,6 +285,33 @@ export default function Consultation({ user, refresh }) {
                     Notes
                   </div>
                   <div style={{ fontSize: "13px", color: "var(--ink)", whiteSpace: "pre-wrap" }}>{consultation.notes}</div>
+                </div>
+              )}
+
+              {consultation.vitals && (
+                <div style={{ marginBottom: "10px", padding: "10px", background: "var(--surface-alt)", borderRadius: "8px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+                    Vitals
+                  </div>
+                  <div style={{ fontSize: "13px", color: "var(--ink)", whiteSpace: "pre-wrap" }}>{consultation.vitals}</div>
+                </div>
+              )}
+
+              {consultation.history && (
+                <div style={{ marginBottom: "10px", padding: "10px", background: "var(--surface-alt)", borderRadius: "8px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+                    History
+                  </div>
+                  <div style={{ fontSize: "13px", color: "var(--ink)", whiteSpace: "pre-wrap" }}>{consultation.history}</div>
+                </div>
+              )}
+
+              {consultation.diagnosis && (
+                <div style={{ marginBottom: "10px", padding: "10px", background: "var(--surface-alt)", borderRadius: "8px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+                    Diagnosis
+                  </div>
+                  <div style={{ fontSize: "13px", color: "var(--ink)", whiteSpace: "pre-wrap" }}>{consultation.diagnosis}</div>
                 </div>
               )}
 

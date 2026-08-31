@@ -37,3 +37,4 @@ pnpm-debug.log*
 # OS
 Thumbs.db
 .vercel
+.env

@@ -79,10 +79,23 @@ db.exec(`
     video_link TEXT,
     prescription TEXT,
     notes TEXT,
+    vitals TEXT,
+    history TEXT,
+    diagnosis TEXT,
     created_at TEXT NOT NULL,
     completed_at TEXT
   );
 `);
+
+  const addColumn = (col: string, type: string) => {
+    const exists = db.prepare("SELECT COUNT(*) AS c FROM pragma_table_info('consultations') WHERE name = ?").get(col) as any;
+    if (exists.c === 0) {
+      db.exec(`ALTER TABLE consultations ADD COLUMN ${col} ${type};`);
+    }
+  };
+  addColumn("vitals", "TEXT");
+  addColumn("history", "TEXT");
+  addColumn("diagnosis", "TEXT");
 
 function seedIfEmpty() {
   const counts = {
@@ -174,12 +187,12 @@ function seedIfEmpty() {
 
   if (counts.consultations === 0) {
     const insert = db.prepare(
-      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, vitals, history, diagnosis, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    insert.run(1, 1, 2, "completed", "https://meet.google.com/abc-def-ghi", "Paracetamol 5ml BD", "Follow up in 3 days", "2026-08-25T09:15:00.000Z", "2026-08-25T09:45:00.000Z");
-    insert.run(2, 2, 3, "scheduled", "https://meet.google.com/xyz-uvw-rst", null, "Growth review consultation", "2026-08-27T11:00:00.000Z", null);
-    insert.run(3, 3, 2, "in-progress", null, "Amoxicillin 5ml TDS", "Fever check follow-up", "2026-08-28T10:30:00.000Z", null);
-    insert.run(4, 4, 3, "scheduled", null, null, "OPD review", "2026-08-29T11:00:00.000Z", null);
+    insert.run(1, 1, 2, "completed", "https://meet.google.com/abc-def-ghi", "Paracetamol 5ml BD", "Follow up in 3 days", "Temp: 99.2°F, HR: 110bpm, RR: 28/min", "No known allergies", "Viral fever", "2026-08-25T09:15:00.000Z", "2026-08-25T09:45:00.000Z");
+    insert.run(2, 2, 3, "scheduled", "https://meet.google.com/xyz-uvw-rst", null, "Growth review consultation", "Temp: 98.6°F, Wt: 14kg, Ht: 95cm", "Asthma history", "Growth milestone review", "2026-08-27T11:00:00.000Z", null);
+    insert.run(3, 3, 2, "in-progress", null, "Amoxicillin 5ml TDS", "Fever check follow-up", "Temp: 100.4°F, HR: 120bpm", "Previous ear infection", "Acute otitis media", "2026-08-28T10:30:00.000Z", null);
+    insert.run(4, 4, 3, "scheduled", null, null, "OPD review", "Temp: 98.8°F, Wt: 18kg", "No significant history", "Routine checkup", "2026-08-29T11:00:00.000Z", null);
   }
 }
 

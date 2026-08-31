@@ -79,6 +79,9 @@ export interface Consultation {
   video_link?: string;
   prescription?: string;
   notes?: string;
+  vitals?: string;
+  history?: string;
+  diagnosis?: string;
   created_at: string;
   completed_at?: string;
 }

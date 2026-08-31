@@ -56,11 +56,11 @@ consultationsRouter.get("/:id", (req, res) => {
 // Create consultation
 consultationsRouter.post("/", (req, res) => {
   try {
-    const { appointment_id, patient_id, doctor_id, video_link, prescription, notes } = req.body;
+    const { appointment_id, patient_id, doctor_id, video_link, prescription, notes, vitals, history, diagnosis } = req.body;
 
     const created_at = new Date().toISOString();
     const stmt = db.prepare(
-      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO consultations (appointment_id, patient_id, doctor_id, status, video_link, prescription, notes, vitals, history, diagnosis, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     const result = stmt.run(
@@ -71,6 +71,9 @@ consultationsRouter.post("/", (req, res) => {
       video_link || null,
       prescription || null,
       notes || null,
+      vitals || null,
+      history || null,
+      diagnosis || null,
       created_at
     );
 
@@ -83,7 +86,7 @@ consultationsRouter.post("/", (req, res) => {
 // Update consultation
 consultationsRouter.put("/:id", (req, res) => {
   try {
-    const { status, video_link, prescription, notes, completed_at } = req.body;
+    const { status, video_link, prescription, notes, completed_at, vitals, history, diagnosis } = req.body;
     const id = req.params.id;
 
     const consultation = db.prepare("SELECT * FROM consultations WHERE id = ?").get(id);
@@ -109,6 +112,18 @@ consultationsRouter.put("/:id", (req, res) => {
     if (notes !== undefined) {
       updates.push("notes = ?");
       values.push(notes);
+    }
+    if (vitals !== undefined) {
+      updates.push("vitals = ?");
+      values.push(vitals);
+    }
+    if (history !== undefined) {
+      updates.push("history = ?");
+      values.push(history);
+    }
+    if (diagnosis !== undefined) {
+      updates.push("diagnosis = ?");
+      values.push(diagnosis);
     }
     if (completed_at !== undefined) {
       updates.push("completed_at = ?");
