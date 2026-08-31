@@ -40,6 +40,8 @@ async function ensureDb() {
 app.get("/api/ping", (_req, res) => {
   res.json({ status: "pong", time: new Date().toISOString() });
 });
+
+app.get("/api/health", async (_req, res) => {
   const health: any = {
     status: "ok",
     clinic: "Dr. Sudharsan's Children's Clinic",
