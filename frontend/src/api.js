@@ -56,6 +56,7 @@ export const api = {
 
   getStock: () => request("/stock"),
   createStockItem: (data) => request("/stock", { method: "POST", body: JSON.stringify(data) }),
+  importStockItems: (csv) => request("/stock/import", { method: "POST", body: JSON.stringify({ csv }) }),
   deleteStockItem: (id) => request(`/stock/${id}`, { method: "DELETE" }),
 
   getInvoices: () => request("/invoices"),
