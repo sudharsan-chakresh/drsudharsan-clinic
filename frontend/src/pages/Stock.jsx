@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { CheckCircle2, Download, Trash2 } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { CheckCircle2, Download, Trash2, Upload } from "lucide-react";
 import Panel from "../components/Panel.jsx";
 import Field from "../components/Field.jsx";
 import Badge from "../components/Badge.jsx";
@@ -10,6 +10,7 @@ import { api } from "../api.js";
 const sampleCsv = `name,category,qty,reorder,unit\nParacetamol Syrup,General,42,20,bottles\nORS Sachets,Rehydration,15,25,sachets`;
 
 export default function Stock({ stock, refresh }) {
+  const fileInputRef = useRef(null);
   const [show, setShow] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [form, setForm] = useState({ name: "", category: "", qty: "", reorder: "", unit: "units" });
@@ -29,6 +30,21 @@ export default function Stock({ stock, refresh }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleBrowseFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === "string") {
+        setCsvText(result);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
   }
 
   async function submitImport(e) {
@@ -76,6 +92,17 @@ export default function Stock({ stock, refresh }) {
         )}
         {showImport && (
           <form onSubmit={submitImport} style={{ marginTop: 16, display: "grid", gap: 12 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <GhostButton icon={Upload} onClick={() => fileInputRef.current?.click()}>Browse</GhostButton>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                hidden
+                onChange={handleBrowseFile}
+              />
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>CSV file from your computer</span>
+            </div>
             <label className="field-label">
               CSV import
               <textarea
