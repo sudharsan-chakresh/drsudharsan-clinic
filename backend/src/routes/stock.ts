@@ -9,7 +9,18 @@ export type StockImportRow = {
   unit: string;
 };
 
+function normalizeColumnName(value: string): string {
+  return value
+    .replace(/\uFEFF/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function splitCsvLine(line: string): string[] {
+  const delimiter = line.includes(";") && !line.includes(",") ? ";" : ",";
   const values: string[] = [];
   let current = "";
   let inQuotes = false;
@@ -26,7 +37,7 @@ function splitCsvLine(line: string): string[] {
       continue;
     }
 
-    if (char === "," && !inQuotes) {
+    if (char === delimiter && !inQuotes) {
       values.push(current.trim());
       current = "";
       continue;
@@ -39,6 +50,19 @@ function splitCsvLine(line: string): string[] {
   return values;
 }
 
+const headerAliases: Record<string, string[]> = {
+  name: ["name", "item name", "item", "product", "medicine", "drug", "stock item", "stock name"],
+  qty: ["qty", "quantity", "current stock qty", "stock qty", "available qty", "available", "count"],
+  category: ["category", "type", "stock type", "group", "class"],
+  reorder: ["reorder level", "reorder", "minimum level", "threshold", "alert level", "stock reorder"],
+  unit: ["unit", "units", "uom", "pack", "measure", "pack size", "primary form available"],
+};
+
+function findHeaderIndex(header: string[], aliases: string[]): number {
+  const normalizedAliases = aliases.map(normalizeColumnName);
+  return header.findIndex((column) => normalizedAliases.includes(column));
+}
+
 export function parseStockImportRows(csvText: string): StockImportRow[] {
   const normalized = (csvText ?? "").trim();
   if (!normalized) return [];
@@ -48,12 +72,19 @@ export function parseStockImportRows(csvText: string): StockImportRow[] {
     throw new Error("CSV import requires a header row and at least one stock item");
   }
 
-  const header = splitCsvLine(rows[0]).map((column) => column.trim().toLowerCase());
-  const required = ["name", "qty"]; 
-  const missingFields = required.filter((field) => !header.includes(field));
+  const header = splitCsvLine(rows[0]).map(normalizeColumnName);
+  const required = ["name", "qty"] as const;
+  const missingFields = required.filter((field) => findHeaderIndex(header, headerAliases[field] ?? [field]) === -1);
+
   if (missingFields.length > 0) {
     throw new Error(`CSV import is missing required columns: ${missingFields.join(", ")}`);
   }
+
+  const nameIndex = findHeaderIndex(header, headerAliases.name);
+  const qtyIndex = findHeaderIndex(header, headerAliases.qty);
+  const categoryIndex = findHeaderIndex(header, headerAliases.category);
+  const reorderIndex = findHeaderIndex(header, headerAliases.reorder);
+  const unitIndex = findHeaderIndex(header, headerAliases.unit);
 
   const items: StockImportRow[] = [];
 
@@ -61,21 +92,16 @@ export function parseStockImportRows(csvText: string): StockImportRow[] {
     const values = splitCsvLine(rows[index]);
     if (values.every((value) => value.trim() === "")) continue;
 
-    const record: Record<string, string> = {};
-    header.forEach((column, columnIndex) => {
-      record[column] = values[columnIndex] ?? "";
-    });
-
-    const name = (record.name ?? "").trim();
-    const qty = Number(record.qty ?? "0");
+    const name = (values[nameIndex] ?? "").trim();
+    const qty = Number((values[qtyIndex] ?? "0").toString().replace(/[^0-9.-]/g, ""));
     if (!name) continue;
 
     const item: StockImportRow = {
       name,
-      category: (record.category ?? "").trim(),
+      category: (values[categoryIndex] ?? "").trim(),
       qty: Number.isFinite(qty) ? qty : 0,
-      reorder: Number(record.reorder ?? "0") || 0,
-      unit: (record.unit ?? "units").trim() || "units",
+      reorder: Number((values[reorderIndex] ?? "0").toString().replace(/[^0-9.-]/g, "")) || 0,
+      unit: (values[unitIndex] ?? "units").trim() || "units",
     };
 
     items.push(item);

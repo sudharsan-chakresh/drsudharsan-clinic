@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import { CheckCircle2, Download, Trash2, Upload } from "lucide-react";
 import Panel from "../components/Panel.jsx";
 import Field from "../components/Field.jsx";
@@ -32,18 +33,33 @@ export default function Stock({ stock, refresh }) {
     }
   }
 
-  function handleBrowseFile(event) {
+  async function handleBrowseFile(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === "string") {
-        setCsvText(result);
+    try {
+      const fileName = file.name.toLowerCase();
+      if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".xlsm")) {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const firstSheet = workbook.Sheets[firstSheetName];
+        const csv = XLSX.utils.sheet_to_csv(firstSheet);
+        setCsvText(csv);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result;
+          if (typeof result === "string") {
+            setCsvText(result);
+          }
+        };
+        reader.readAsText(file);
       }
-    };
-    reader.readAsText(file);
+    } catch (error) {
+      alert("Unable to read the selected file. Please choose a CSV or Excel file.");
+    }
+
     event.target.value = "";
   }
 
@@ -97,7 +113,7 @@ export default function Stock({ stock, refresh }) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.xls,.xlsx,.xlsm,text/csv"
                 hidden
                 onChange={handleBrowseFile}
               />

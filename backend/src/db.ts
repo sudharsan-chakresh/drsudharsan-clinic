@@ -1,8 +1,56 @@
 import { Pool } from "pg";
+import Database from "better-sqlite3";
+import path from "path";
 
 const connectionString = process.env.DATABASE_URL;
 
 let pool: Pool | null = null;
+type BetterSqliteDatabase = InstanceType<typeof Database>;
+let sqliteDb: BetterSqliteDatabase | null = null;
+
+function getSqliteDb(): BetterSqliteDatabase {
+  if (!sqliteDb) {
+    const dbPath = path.join(__dirname, "..", "clinic.db");
+    sqliteDb = new Database(dbPath);
+    sqliteDb.pragma("journal_mode = WAL");
+  }
+  return sqliteDb;
+}
+
+function toSqliteQuery(text: string) {
+  return text.replace(/\$(\d+)/g, "?");
+}
+
+function sqliteResultFromStatement(statement: any, params: any[] = []) {
+  const operation = statement.sql.trim().toUpperCase();
+
+  if (operation.includes("INSERT") && operation.includes("RETURNING")) {
+    const result = statement.run(...params);
+    const lastId = Number(result.lastInsertRowid ?? 0);
+    const tableNameMatch = statement.sql.match(/INTO\s+([A-Za-z0-9_]+)/i);
+    const tableName = tableNameMatch ? tableNameMatch[1] : null;
+    const rows = tableName && lastId ? getSqliteDb().prepare(`SELECT * FROM ${tableName} WHERE id = ?`).all(lastId) : [];
+    return { rows, rowCount: rows.length };
+  }
+
+  if (operation.includes("UPDATE") && operation.includes("RETURNING")) {
+    const idMatch = statement.sql.match(/WHERE\s+id\s*=\s*\?/i);
+    const idValue = idMatch ? params[params.length - 1] : null;
+    const result = statement.run(...params);
+    const rows = idValue !== null && idValue !== undefined
+      ? getSqliteDb().prepare(`SELECT * FROM ${statement.sql.match(/UPDATE\s+([A-Za-z0-9_]+)/i)?.[1] ?? ""} WHERE id = ?`).all(idValue)
+      : [];
+    return { rows, rowCount: rows.length };
+  }
+
+  if (operation.includes("DELETE") && operation.includes("RETURNING")) {
+    const result = statement.run(...params);
+    return { rows: [], rowCount: result.changes };
+  }
+
+  const rows = statement.all(...params);
+  return { rows, rowCount: rows.length };
+}
 
 function getPool(): Pool {
   if (!pool) {
@@ -19,6 +67,17 @@ function getPool(): Pool {
 
 export async function query(text: string, params: any[] = []) {
   const start = Date.now();
+
+  if (!connectionString) {
+    const db = getSqliteDb();
+    const normalized = toSqliteQuery(text);
+    const statement = db.prepare(normalized);
+    const result = sqliteResultFromStatement(statement, params);
+    const duration = Date.now() - start;
+    console.log("Query executed", { text: text.substring(0, 50), duration, rows: result.rowCount });
+    return result;
+  }
+
   const p = getPool();
   const res = await p.query(text, params);
   const duration = Date.now() - start;
@@ -29,7 +88,7 @@ export async function query(text: string, params: any[] = []) {
 export async function initDb() {
   await query(`
     CREATE TABLE IF NOT EXISTS appointments (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       time TEXT NOT NULL,
       patient TEXT NOT NULL,
       guardian TEXT,
@@ -39,18 +98,18 @@ export async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS patients (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       guardian TEXT,
       age TEXT,
       phone TEXT,
       blood TEXT,
       last_visit TEXT DEFAULT '—',
-      deleted_at TIMESTAMP DEFAULT NULL
+      deleted_at TEXT DEFAULT NULL
     );
 
     CREATE TABLE IF NOT EXISTS queue (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       token TEXT NOT NULL,
       patient TEXT NOT NULL,
       doctor TEXT,
@@ -58,7 +117,7 @@ export async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS stock (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       category TEXT,
       qty INTEGER NOT NULL DEFAULT 0,
@@ -75,17 +134,17 @@ export async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS staff (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       role TEXT NOT NULL,
       shift TEXT,
       phone TEXT,
       status TEXT NOT NULL DEFAULT 'On duty',
-      deleted_at TIMESTAMP DEFAULT NULL
+      deleted_at TEXT DEFAULT NULL
     );
 
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -95,7 +154,7 @@ export async function initDb() {
     );
 
     CREATE TABLE IF NOT EXISTS consultations (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       appointment_id INTEGER,
       patient_id INTEGER,
       doctor_id INTEGER,
@@ -116,6 +175,17 @@ export async function initDb() {
       created_at TEXT NOT NULL,
       completed_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS drugs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      category TEXT,
+      dosage TEXT,
+      pack_size TEXT,
+      price INTEGER DEFAULT 0,
+      notes TEXT,
+      deleted_at TEXT DEFAULT NULL
+    );
   `);
 }
 
@@ -123,7 +193,7 @@ export async function seedIfEmpty() {
   const counts: Record<string, number> = {};
   for (const table of ["appointments", "patients", "queue", "stock", "invoices", "staff", "users", "consultations"]) {
     const result = await query(`SELECT COUNT(*) AS c FROM ${table}`);
-    counts[table] = parseInt(result.rows[0].c);
+    counts[table] = parseInt(result.rows[0].c, 10);
   }
 
   if (counts.appointments === 0) {
