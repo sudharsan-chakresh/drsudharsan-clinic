@@ -77,6 +77,19 @@ After deployment, update your frontend environment:
    ```
    VITE_API_URL=https://your-backend-url/api
    ```
+
+If the frontend and backend are deployed together using the repository `vercel.json`, leave `VITE_API_URL` unset so the frontend uses the same-origin `/api` routes.
+
+### Database configuration for Vercel
+
+Vercel functions must use a hosted PostgreSQL database. Add these environment variables in the Vercel project settings for Preview and Production:
+
+```text
+DATABASE_URL=postgresql://...
+JWT_SECRET=<long-random-value>
+```
+
+Do not rely on the local SQLite fallback on Vercel. The serverless filesystem is temporary and is not suitable for application data.
 4. Redeploy the frontend
 
 ### Update Frontend Code (if needed):

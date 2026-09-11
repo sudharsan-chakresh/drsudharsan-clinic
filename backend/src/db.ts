@@ -21,24 +21,24 @@ function toSqliteQuery(text: string) {
   return text.replace(/\$(\d+)/g, "?");
 }
 
-function sqliteResultFromStatement(statement: any, params: any[] = []) {
-  const operation = statement.sql.trim().toUpperCase();
+function sqliteResultFromStatement(statement: any, params: any[] = [], rawSql: string = "") {
+  const operation = (rawSql || statement?.sql || "").trim().toUpperCase();
 
   if (operation.includes("INSERT") && operation.includes("RETURNING")) {
     const result = statement.run(...params);
     const lastId = Number(result.lastInsertRowid ?? 0);
-    const tableNameMatch = statement.sql.match(/INTO\s+([A-Za-z0-9_]+)/i);
+    const tableNameMatch = rawSql.match(/INTO\s+([A-Za-z0-9_]+)/i);
     const tableName = tableNameMatch ? tableNameMatch[1] : null;
     const rows = tableName && lastId ? getSqliteDb().prepare(`SELECT * FROM ${tableName} WHERE id = ?`).all(lastId) : [];
     return { rows, rowCount: rows.length };
   }
 
   if (operation.includes("UPDATE") && operation.includes("RETURNING")) {
-    const idMatch = statement.sql.match(/WHERE\s+id\s*=\s*\?/i);
+    const idMatch = rawSql.match(/WHERE\s+id\s*=\s*\?/i);
     const idValue = idMatch ? params[params.length - 1] : null;
     const result = statement.run(...params);
     const rows = idValue !== null && idValue !== undefined
-      ? getSqliteDb().prepare(`SELECT * FROM ${statement.sql.match(/UPDATE\s+([A-Za-z0-9_]+)/i)?.[1] ?? ""} WHERE id = ?`).all(idValue)
+      ? getSqliteDb().prepare(`SELECT * FROM ${rawSql.match(/UPDATE\s+([A-Za-z0-9_]+)/i)?.[1] ?? ""} WHERE id = ?`).all(idValue)
       : [];
     return { rows, rowCount: rows.length };
   }
@@ -50,6 +50,13 @@ function sqliteResultFromStatement(statement: any, params: any[] = []) {
 
   const rows = statement.all(...params);
   return { rows, rowCount: rows.length };
+}
+
+function splitSqlStatements(sql: string): string[] {
+  return sql
+    .split(";")
+    .map((statement) => statement.trim())
+    .filter(Boolean);
 }
 
 function getPool(): Pool {
@@ -72,7 +79,7 @@ export async function query(text: string, params: any[] = []) {
     const db = getSqliteDb();
     const normalized = toSqliteQuery(text);
     const statement = db.prepare(normalized);
-    const result = sqliteResultFromStatement(statement, params);
+    const result = sqliteResultFromStatement(statement, params, normalized);
     const duration = Date.now() - start;
     console.log("Query executed", { text: text.substring(0, 50), duration, rows: result.rowCount });
     return result;
@@ -86,7 +93,7 @@ export async function query(text: string, params: any[] = []) {
 }
 
 export async function initDb() {
-  await query(`
+  const schemaSql = `
     CREATE TABLE IF NOT EXISTS appointments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       time TEXT NOT NULL,
@@ -186,7 +193,19 @@ export async function initDb() {
       notes TEXT,
       deleted_at TEXT DEFAULT NULL
     );
-  `);
+  `;
+
+  if (!connectionString) {
+    const db = getSqliteDb();
+    db.exec(schemaSql);
+    return;
+  }
+
+  const p = getPool();
+  const postgresSchemaSql = schemaSql.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/g, "SERIAL PRIMARY KEY");
+  for (const statement of splitSqlStatements(postgresSchemaSql)) {
+    await p.query(statement);
+  }
 }
 
 export async function seedIfEmpty() {

@@ -31,3 +31,12 @@ test("parseStockImportRows accepts workbook-style headers from Excel exports", (
     { name: "Lanoxin Pediatric", category: "Commercial", qty: 40, reorder: 10, unit: "Elixir / Oral Solution" },
   ]);
 });
+
+test("initDb creates the SQLite schema without multi-statement prepare errors", async () => {
+  const { initDb, query } = await import("./db");
+
+  await initDb();
+
+  const result = await query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'appointments'");
+  assert.equal(result.rows.length, 1);
+});

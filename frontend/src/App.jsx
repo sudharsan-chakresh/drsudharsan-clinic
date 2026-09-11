@@ -141,7 +141,7 @@ export default function App() {
       <div style={{ padding: 40, fontFamily: "'Plus Jakarta Sans', sans-serif", color: "var(--danger)" }}>
         Couldn't connect to the backend at <code>/api</code>. {error}
         <br />
-        Make sure the backend is running (<code>npm run dev</code> in <code>backend/</code>) on port 9876.
+        Check the backend deployment and its database configuration, then reload the page.
       </div>
     );
   }

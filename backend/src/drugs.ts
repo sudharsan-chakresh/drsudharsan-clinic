@@ -1,18 +1,33 @@
 import { query } from "./db";
 
 export async function initDrugMaster() {
-  await query(`
-    CREATE TABLE IF NOT EXISTS drugs (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      category TEXT,
-      form TEXT,
-      strength TEXT,
-      common_usage TEXT,
-      deleted_at TIMESTAMP DEFAULT NULL,
-      created_at TIMESTAMP DEFAULT NOW()
-    )
-  `);
+  const sql = process.env.DATABASE_URL
+    ? `
+      CREATE TABLE IF NOT EXISTS drugs (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT,
+        form TEXT,
+        strength TEXT,
+        common_usage TEXT,
+        deleted_at TIMESTAMP DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `
+    : `
+      CREATE TABLE IF NOT EXISTS drugs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT,
+        form TEXT,
+        strength TEXT,
+        common_usage TEXT,
+        deleted_at TEXT DEFAULT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+  await query(sql);
 }
 
 export async function seedDrugs() {

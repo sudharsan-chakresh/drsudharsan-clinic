@@ -31,11 +31,22 @@ async function ensureDb() {
     await initDrugMaster();
     await seedDrugs();
     console.log("Database initialized and seeded");
+    return true;
   } catch (error) {
     console.error("Failed to initialize database:", error);
     dbInitialized = false;
+    throw error;
   }
 }
+
+app.use("/api", async (_req, _res, next) => {
+  try {
+    await ensureDb();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.get("/api/ping", (_req, res) => {
   res.json({ status: "pong", time: new Date().toISOString() });
@@ -52,7 +63,7 @@ app.get("/api/health", async (_req, res) => {
 
   try {
     await ensureDb();
-    const result = await query("SELECT NOW() as time");
+    const result = await query("SELECT CURRENT_TIMESTAMP as time");
     health.db = "connected";
     health.time = result.rows[0].time;
   } catch (error: any) {
@@ -95,7 +106,9 @@ async function start() {
   console.log("DATABASE_URL set:", !!process.env.DATABASE_URL);
   console.log("JWT_SECRET set:", !!process.env.JWT_SECRET);
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && process.env.VERCEL) {
+    console.error("DATABASE_URL is not set for Vercel; configure a PostgreSQL connection string.");
+  } else if (!process.env.DATABASE_URL) {
     console.error("DATABASE_URL is not set!");
   }
 
